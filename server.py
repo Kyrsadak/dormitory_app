@@ -15,7 +15,7 @@ PORT = 8080
 PUBLIC_DIR = os.path.join(os.path.dirname(__file__), "public")
 EXCEL_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "Лист Microsoft Excel.xlsx"))
 
-ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "admin2026")
+ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "yNjA7371OSuooFBm")
 ADMIN_TOKEN = "admin_secret_token_dormitory_2026"
 
 class DormitoryHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
