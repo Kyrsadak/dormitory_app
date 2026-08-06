@@ -393,8 +393,15 @@ def daily_scheduler_loop():
 
         time.sleep(30)
 
+_bot_running_lock = False
+
 def run_bot(token=None):
-    global BOT_TOKEN
+    global BOT_TOKEN, _bot_running_lock
+    if _bot_running_lock:
+        print("[Telegram Bot] Warning: Bot instance is already running. Skipping duplicate start.")
+        return
+    _bot_running_lock = True
+
     if token:
         BOT_TOKEN = token
 

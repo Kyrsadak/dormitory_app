@@ -256,10 +256,6 @@ def run_server():
     bot_token = os.environ.get("TELEGRAM_BOT_TOKEN")
     if bot_token:
         telegram_bot.start_bot_in_background(bot_token)
-    elif os.path.exists(telegram_bot.CONFIG_FILE):
-        cfg = telegram_bot.load_config()
-        if cfg.get("chat_id"):
-            telegram_bot.start_bot_in_background()
 
     handler = DormitoryHTTPRequestHandler
     with socketserver.TCPServer(("", PORT), handler) as httpd:
