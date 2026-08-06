@@ -404,7 +404,7 @@ def run_bot(token=None):
         print("========================================================\n")
         return
 
-    print(f"🤖 Telegram Бот Общежития запущен (Админ ID: 7990114364)...")
+    print(f"[Telegram Bot] Running for Admin ID: 7990114364...")
 
     # Start Scheduler Thread
     scheduler_thread = threading.Thread(target=daily_scheduler_loop, daemon=True)
