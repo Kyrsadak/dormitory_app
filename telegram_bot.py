@@ -41,11 +41,12 @@ def telegram_api(method, payload=None):
     try:
         data = json.dumps(payload).encode("utf-8") if payload else None
         req = urllib.request.Request(url, data=data, headers={"Content-Type": "application/json"})
-        with urllib.request.urlopen(req, timeout=10) as response:
+        with urllib.request.urlopen(req, timeout=40) as response:
             res_data = json.loads(response.read().decode("utf-8"))
             return res_data
     except Exception as e:
-        print(f"[Telegram Bot API Error] {method}: {e}")
+        if "timed out" not in str(e).lower():
+            print(f"[Telegram Bot API Error] {method}: {e}")
         return None
 
 def send_message(chat_id, text, reply_markup=None):
@@ -242,6 +243,14 @@ def run_bot(token=None):
 
         time.sleep(1)
 
+def start_bot_in_background(token=None):
+    """Start Telegram bot loop in a daemon thread so it runs automatically with server.py in the cloud."""
+    bot_thread = threading.Thread(target=run_bot, args=(token,), daemon=True)
+    bot_thread.start()
+    print("[Telegram Bot] Launched in background thread.")
+
 if __name__ == "__main__":
     token_arg = sys.argv[1] if len(sys.argv) > 1 else None
     run_bot(token_arg)
+
+

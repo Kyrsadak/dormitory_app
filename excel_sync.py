@@ -34,6 +34,7 @@ def generate_excel_workbook(db_path):
     SELECT r.id, r.num_code, r.full_name, r.nickname, r.profile_url, r.gender, r.room_number, rm.floor, r.status, r.created_at
     FROM residents r
     LEFT JOIN rooms rm ON r.room_number = rm.room_number
+    WHERE r.status != 'evicted'
     ORDER BY rm.floor ASC, r.room_number ASC, r.full_name ASC
     """)
     rows = c.fetchall()

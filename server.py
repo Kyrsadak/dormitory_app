@@ -247,10 +247,20 @@ class DormitoryHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             print("Error in do_DELETE:", e)
             self._send_json({"error": str(e)}, status=500)
 
+import telegram_bot
+
 def run_server():
     db.init_db()
     excel_sync.export_db_to_excel(db.DB_PATH, EXCEL_PATH)
     
+    bot_token = os.environ.get("TELEGRAM_BOT_TOKEN")
+    if bot_token:
+        telegram_bot.start_bot_in_background(bot_token)
+    elif os.path.exists(telegram_bot.CONFIG_FILE):
+        cfg = telegram_bot.load_config()
+        if cfg.get("chat_id"):
+            telegram_bot.start_bot_in_background()
+
     handler = DormitoryHTTPRequestHandler
     with socketserver.TCPServer(("", PORT), handler) as httpd:
         print(f"Dormitory Production Server running at http://localhost:{PORT}")
@@ -261,3 +271,4 @@ def run_server():
 
 if __name__ == "__main__":
     run_server()
+

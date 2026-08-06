@@ -161,7 +161,7 @@ def get_stats():
     c.execute("SELECT COUNT(*) as temp FROM residents WHERE status = '14_days'")
     temp_count = c.fetchone()["temp"]
 
-    c.execute("SELECT COUNT(*) as waiting FROM residents WHERE status = 'waiting' OR room_number IS NULL")
+    c.execute("SELECT COUNT(*) as waiting FROM residents WHERE (status = 'waiting' OR room_number IS NULL OR room_number = '') AND status != 'evicted'")
     waiting_count = c.fetchone()["waiting"]
 
     c.execute("SELECT SUM(capacity) as total_cap FROM rooms")
