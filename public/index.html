@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Система Управления Общежитием (PROD)</title>
+    
+    <!-- Google Fonts & Font Awesome Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="styles.css?v=20260807_04">
+</head>
+<body>
+    <div class="app-layout">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="logo-area">
+                <div class="logo-icon"><i class="fa-solid fa-building-user"></i></div>
+                <div>
+                    <h1>Система Управления Общежитием</h1>
+                    <div class="subtitle">База данных SQLite (PROD) &bull; Дежурства по кухне (7 Этаж)</div>
+                </div>
+            </div>
+
+            <!-- Today's Duty Banner -->
+            <div class="today-duty-banner" id="todayDutyBanner" style="cursor:pointer;" onclick="switchView('calendar')">
+                <div class="banner-title"><i class="fa-solid fa-broom"></i> Сегодня дежурит:</div>
+                <div class="banner-items" id="todayDutyItems">
+                    <!-- Populated dynamically by app.js -->
+                </div>
+            </div>
+
+            <div class="header-actions">
+                <button type="button" class="btn btn-secondary" onclick="switchView('calendar')">
+                    <i class="fa-solid fa-calendar-days"></i> Календарь
+                </button>
+                <button type="button" class="btn btn-primary" onclick="openAddResidentModal()">
+                    <i class="fa-solid fa-user-plus"></i> Заселить
+                </button>
+                <button type="button" class="btn btn-secondary" onclick="openLogsModal()">
+                    <i class="fa-solid fa-clock-rotate-left"></i> Журнал
+                </button>
+                <button type="button" class="btn btn-outline" onclick="exportToExcel()">
+                    <i class="fa-solid fa-file-excel"></i> Excel
+                </button>
+            </div>
+        </header>
+
+        <!-- KPI Grid -->
+        <div class="kpi-grid">
+            <div class="kpi-card">
+                <div class="kpi-icon icon-blue"><i class="fa-solid fa-users"></i></div>
+                <div class="kpi-info">
+                    <div class="val" id="kpiTotal">0</div>
+                    <div class="lbl">Всего жильцов</div>
+                </div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-icon icon-pink"><i class="fa-solid fa-venus"></i></div>
+                <div class="kpi-info">
+                    <div class="val" id="kpiFloor2">0</div>
+                    <div class="lbl">2 Этаж (Женский)</div>
+                </div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-icon icon-sky"><i class="fa-solid fa-mars"></i></div>
+                <div class="kpi-info">
+                    <div class="val" id="kpiFloor7">0</div>
+                    <div class="lbl">7 Этаж (Мужской)</div>
+                </div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-icon icon-amber"><i class="fa-solid fa-clock"></i></div>
+                <div class="kpi-info">
+                    <div class="val" id="kpiTemp">0</div>
+                    <div class="lbl">Временные (14 дней)</div>
+                </div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-icon icon-red"><i class="fa-solid fa-user-clock"></i></div>
+                <div class="kpi-info">
+                    <div class="val" id="kpiWaiting">0</div>
+                    <div class="lbl">В очереди / Без комнаты</div>
+                </div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-icon icon-green"><i class="fa-solid fa-bed"></i></div>
+                <div class="kpi-info">
+                    <div class="val" id="kpiFreeBeds">0</div>
+                    <div class="lbl">Свободных койко-мест</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mode & Controls Bar -->
+        <div class="controls-bar">
+            <!-- View Mode Switcher -->
+            <div class="view-mode-tabs">
+                <button type="button" class="tab-btn active" id="viewRoomsBtn" onclick="switchView('rooms')">
+                    <i class="fa-solid fa-border-all"></i> Сетка комнат
+                </button>
+                <button type="button" class="tab-btn" id="viewCalendarBtn" onclick="switchView('calendar')">
+                    <i class="fa-solid fa-calendar-days"></i> Календарь дежурств
+                </button>
+            </div>
+
+            <!-- Room Filter Tabs (Visible in Rooms View) -->
+            <div class="filter-tabs" id="roomFilterTabs">
+                <button type="button" class="tab-btn active" data-filter="all" onclick="setFilter('all', this)">Все комнаты</button>
+                <button type="button" class="tab-btn" data-filter="2" onclick="setFilter('2', this)">2 Этаж (Женский)</button>
+                <button type="button" class="tab-btn" data-filter="7" onclick="setFilter('7', this)">7 Этаж (Мужской)</button>
+                <button type="button" class="tab-btn" data-filter="temp" onclick="setFilter('temp', this)">14 Дней</button>
+                <button type="button" class="tab-btn" data-filter="waiting" onclick="setFilter('waiting', this)">В очереди</button>
+            </div>
+
+            <!-- Calendar Controls (Visible in Calendar View) -->
+            <div class="calendar-controls" id="calendarControls" style="display: none;">
+                <button type="button" class="btn btn-secondary btn-sm" onclick="changeCalendarMonth(-1)"><i class="fa-solid fa-chevron-left"></i> Назад</button>
+                <span class="calendar-month-title" id="calendarMonthTitle">Август 2026</span>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="changeCalendarMonth(1)">Вперед <i class="fa-solid fa-chevron-right"></i></button>
+            </div>
+
+            <div class="search-box" id="searchBoxContainer">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="text" id="searchInput" placeholder="Поиск по ФИО, нику или комнате..." oninput="renderApp()">
+            </div>
+        </div>
+
+        <!-- Content Area: Rooms Layout View -->
+        <main id="floorsContainer">
+            <!-- Floor 2 & Floor 7 sections rendered dynamically by app.js -->
+        </main>
+
+        <!-- Content Area: Calendar View -->
+        <div id="calendarContainer" style="display: none;">
+            <div class="calendar-grid-header">
+                <div>Пн</div><div>Вт</div><div>Ср</div><div>Чт</div><div>Пт</div><div>Сб</div><div>Вс</div>
+            </div>
+            <div class="calendar-days-grid" id="calendarDaysGrid">
+                <!-- Populated dynamically by app.js -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Add / Edit Resident -->
+    <div class="modal-overlay" id="residentModal">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3 id="modalTitle">Заселение жильца</h3>
+                <button type="button" class="modal-close" onclick="closeResidentModal()">&times;</button>
+            </div>
+            <form id="residentForm" onsubmit="handleSaveResident(event)">
+                <input type="hidden" id="resId">
+                <div class="form-group">
+                    <label>ФИО Проживающего *</label>
+                    <input type="text" id="resFullName" required placeholder="Например: Иванов Иван Иванович">
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Никнейм</label>
+                        <input type="text" id="resNickname" placeholder="Например: ivanov_i">
+                    </div>
+                    <div class="form-group">
+                        <label>Пол *</label>
+                        <select id="resGender" required onchange="updateRoomOptions()">
+                            <option value="M">Мужской</option>
+                            <option value="F">Женский</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Комната</label>
+                        <select id="resRoomNumber">
+                            <option value="">-- В очередь (Без комнаты) --</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Статус *</label>
+                        <select id="resStatus" required>
+                            <option value="permanent">Постоянный жилец</option>
+                            <option value="14_days">Временное проживание (14 дней)</option>
+                            <option value="waiting">В очереди</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Ссылка на профиль (опционально)</label>
+                    <input type="url" id="resProfileUrl" placeholder="https://platform.21-school.ru/admin/profile/...">
+                </div>
+
+                <div class="form-group">
+                    <label>Заметки / Примечание</label>
+                    <textarea id="resNotes" rows="2" placeholder="Дополнительная информация..."></textarea>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeResidentModal()">Отмена</button>
+                    <button type="submit" class="btn btn-primary"><i class="fa-solid fa-floppy-disk"></i> Сохранить</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Edit Duty Room -->
+    <div class="modal-overlay" id="dutyModal">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3 id="dutyModalTitle">Переназначение дежурства</h3>
+                <button type="button" class="modal-close" onclick="closeDutyModal()">&times;</button>
+            </div>
+            <form id="dutyForm" onsubmit="handleSaveDuty(event)">
+                <input type="hidden" id="dutyDate">
+                <input type="hidden" id="dutyFloor" value="7">
+
+                <div class="form-group">
+                    <label>Дата дежурства</label>
+                    <input type="text" id="dutyDateDisplay" readonly style="opacity:0.7;">
+                </div>
+
+                <div class="form-group">
+                    <label>Дежурная Комната *</label>
+                    <select id="dutyRoomNumber" required>
+                        <!-- Populated by JS -->
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Статус дежурства</label>
+                    <select id="dutyStatus">
+                        <option value="pending">⏳ Запланировано</option>
+                        <option value="completed"> Выполнено</option>
+                        <option value="skipped">⚠️ Пропущено</option>
+                        <option value="replaced">🔄 Перенесено / Заменено</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Примечание</label>
+                    <input type="text" id="dutyNotes" placeholder="Причина смены или заметка...">
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeDutyModal()">Отмена</button>
+                    <button type="submit" class="btn btn-primary"><i class="fa-solid fa-floppy-disk"></i> Сохранить</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Activity Logs -->
+    <div class="modal-overlay" id="logsModal">
+        <div class="modal-card modal-large">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-clock-rotate-left"></i> Журнал действий аудита</h3>
+                <button type="button" class="modal-close" onclick="closeLogsModal()">&times;</button>
+            </div>
+            <div class="logs-body">
+                <table class="logs-table">
+                    <thead>
+                        <tr>
+                            <th>Время</th>
+                            <th>Действие</th>
+                            <th>Подробности</th>
+                        </tr>
+                    </thead>
+                    <tbody id="logsTableBody">
+                        <!-- Populated by JS -->
+                    </tbody>
+                </table>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeLogsModal()">Закрыть</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js?v=20260807_04"></script>
+</body>
+</html>
