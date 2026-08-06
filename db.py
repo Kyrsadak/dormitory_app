@@ -416,7 +416,7 @@ def mark_duty_status(duty_date, floor, status, notes=""):
     ON CONFLICT(duty_date, floor) DO UPDATE SET
         status = excluded.status,
         notes = excluded.notes
-    """, (duty_date, floor, room_num, status, notes))
+    """, (duty_date, room_num, status, notes))
 
     log_activity(conn, "Статус дежурства", f"Дежурство {duty_date} (Комната {room_num}) помечено как '{status}'")
 
