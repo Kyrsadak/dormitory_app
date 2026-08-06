@@ -101,6 +101,19 @@ h1 {
     margin-top: 2px;
 }
 
+.admin-badge {
+    font-size: 11px;
+    font-weight: 700;
+    background: var(--amber-bg);
+    color: var(--amber-accent);
+    border: 1px solid var(--amber-border);
+    padding: 2px 8px;
+    border-radius: 12px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
 /* Today's Duty Banner */
 .today-duty-banner {
     background: var(--bg-card);

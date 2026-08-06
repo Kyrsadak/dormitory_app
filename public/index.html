@@ -10,7 +10,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="styles.css?v=20260807_04">
+    <link rel="stylesheet" href="styles.css?v=20260807_05">
 </head>
 <body>
     <div class="app-layout">
@@ -19,7 +19,10 @@
             <div class="logo-area">
                 <div class="logo-icon"><i class="fa-solid fa-building-user"></i></div>
                 <div>
-                    <h1>Система Управления Общежитием</h1>
+                    <h1 style="display:flex; align-items:center; gap:8px;">
+                        Система Управления Общежитием
+                        <span class="admin-badge" id="adminBadge" style="display:none;"><i class="fa-solid fa-crown"></i> Админ</span>
+                    </h1>
                     <div class="subtitle">База данных SQLite (PROD) &bull; Дежурства по кухне (7 Этаж)</div>
                 </div>
             </div>
@@ -36,14 +39,22 @@
                 <button type="button" class="btn btn-secondary" onclick="switchView('calendar')">
                     <i class="fa-solid fa-calendar-days"></i> Календарь
                 </button>
-                <button type="button" class="btn btn-primary" onclick="openAddResidentModal()">
+                
+                <!-- Admin-only buttons -->
+                <button type="button" class="btn btn-primary admin-only-btn" onclick="openAddResidentModal()" style="display:none;">
                     <i class="fa-solid fa-user-plus"></i> Заселить
                 </button>
-                <button type="button" class="btn btn-secondary" onclick="openLogsModal()">
+                <button type="button" class="btn btn-secondary admin-only-btn" onclick="openLogsModal()" style="display:none;">
                     <i class="fa-solid fa-clock-rotate-left"></i> Журнал
                 </button>
+                
                 <button type="button" class="btn btn-outline" onclick="exportToExcel()">
                     <i class="fa-solid fa-file-excel"></i> Excel
+                </button>
+
+                <!-- Admin Auth Button -->
+                <button type="button" class="btn btn-secondary" id="adminAuthBtn" onclick="toggleAdminAuth()">
+                    <i class="fa-solid fa-lock"></i> Вход для админа
                 </button>
             </div>
         </header>
@@ -141,6 +152,27 @@
             <div class="calendar-days-grid" id="calendarDaysGrid">
                 <!-- Populated dynamically by app.js -->
             </div>
+        </div>
+    </div>
+
+    <!-- Modal: Admin Login -->
+    <div class="modal-overlay" id="adminLoginModal">
+        <div class="modal-card" style="max-width:380px;">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-lock" style="color:var(--amber-accent)"></i> Вход Администратора</h3>
+                <button type="button" class="modal-close" onclick="closeAdminLoginModal()">&times;</button>
+            </div>
+            <form onsubmit="handleAdminLoginSubmit(event)">
+                <div class="form-group">
+                    <label>Введите пароль администратора *</label>
+                    <input type="password" id="adminPasswordInput" required placeholder="••••••••">
+                    <div id="adminLoginError" style="color:var(--red-accent); font-size:12px; margin-top:6px; display:none;"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeAdminLoginModal()">Отмена</button>
+                    <button type="submit" class="btn btn-primary"><i class="fa-solid fa-right-to-bracket"></i> Войти</button>
+                </div>
+            </form>
         </div>
     </div>
 
@@ -280,6 +312,6 @@
         </div>
     </div>
 
-    <script src="app.js?v=20260807_04"></script>
+    <script src="app.js?v=20260807_05"></script>
 </body>
 </html>

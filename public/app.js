@@ -3,12 +3,17 @@ let currentView = 'rooms'; // 'rooms' or 'calendar'
 let globalFloorsData = null;
 let residentsMap = new Map();
 
+// Admin Auth State
+let adminToken = localStorage.getItem('dorm_admin_token') || '';
+let isAdmin = !!adminToken;
+
 // Calendar state: August 2026
 let calYear = 2026;
-let calMonth = 8; // August
+let calMonth = 8;
 let globalDutyCalendarData = null;
 
 document.addEventListener('DOMContentLoaded', () => {
+    updateAdminUI();
     fetchStats();
     fetchFloorsData();
     fetchTodayDuty();
@@ -37,6 +42,7 @@ document.addEventListener('DOMContentLoaded', () => {
             closeResidentModal();
             closeDutyModal();
             closeLogsModal();
+            closeAdminLoginModal();
         }
     });
 
@@ -46,10 +52,114 @@ document.addEventListener('DOMContentLoaded', () => {
                 closeResidentModal();
                 closeDutyModal();
                 closeLogsModal();
+                closeAdminLoginModal();
             }
         });
     });
 });
+
+function getAdminHeaders() {
+    const headers = { 'Content-Type': 'application/json' };
+    if (adminToken) {
+        headers['X-Admin-Token'] = adminToken;
+    }
+    return headers;
+}
+
+function updateAdminUI() {
+    isAdmin = !!adminToken;
+    
+    // Toggle Admin Only buttons
+    document.querySelectorAll('.admin-only-btn').forEach(btn => {
+        btn.style.display = isAdmin ? 'inline-flex' : 'none';
+    });
+
+    // Admin Badge
+    const badge = document.getElementById('adminBadge');
+    if (badge) badge.style.display = isAdmin ? 'inline-flex' : 'none';
+
+    // Auth Button text
+    const authBtn = document.getElementById('adminAuthBtn');
+    if (authBtn) {
+        if (isAdmin) {
+            authBtn.innerHTML = `<i class="fa-solid fa-right-from-bracket"></i> Выйти из админа`;
+            authBtn.className = "btn btn-danger";
+        } else {
+            authBtn.innerHTML = `<i class="fa-solid fa-lock"></i> Вход для админа`;
+            authBtn.className = "btn btn-secondary";
+        }
+    }
+
+    if (currentView === 'rooms') renderApp();
+    if (currentView === 'calendar') renderDutyCalendar();
+}
+
+function toggleAdminAuth() {
+    if (isAdmin) {
+        // Logout
+        adminToken = '';
+        localStorage.removeItem('dorm_admin_token');
+        updateAdminUI();
+    } else {
+        // Open Login Modal
+        openAdminLoginModal();
+    }
+}
+
+function openAdminLoginModal() {
+    const errDiv = document.getElementById('adminLoginError');
+    if (errDiv) errDiv.style.display = 'none';
+    const pwdInput = document.getElementById('adminPasswordInput');
+    if (pwdInput) pwdInput.value = '';
+    document.getElementById('adminLoginModal').classList.add('active');
+    setTimeout(() => { if (pwdInput) pwdInput.focus(); }, 100);
+}
+
+function closeAdminLoginModal() {
+    document.getElementById('adminLoginModal').classList.remove('active');
+}
+
+async function handleAdminLoginSubmit(event) {
+    event.preventDefault();
+    const pwd = document.getElementById('adminPasswordInput').value.trim();
+    const errDiv = document.getElementById('adminLoginError');
+
+    try {
+        const res = await fetch('/api/admin/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ password: pwd })
+        });
+        const data = await res.json();
+
+        if (res.ok && data.success) {
+            adminToken = data.token;
+            localStorage.setItem('dorm_admin_token', adminToken);
+            closeAdminLoginModal();
+            updateAdminUI();
+        } else {
+            if (errDiv) {
+                errDiv.innerText = data.error || 'Неверный пароль администратора';
+                errDiv.style.display = 'block';
+            }
+        }
+    } catch (err) {
+        console.error("Login error:", err);
+        if (errDiv) {
+            errDiv.innerText = 'Ошибка соединения с сервером';
+            errDiv.style.display = 'block';
+        }
+    }
+}
+
+function requireAdminPermission(actionCallback) {
+    if (!isAdmin) {
+        alert("🔒 Эта функция доступна только Администратору. Пожалуйста, войдите с помощью пароля администратора.");
+        openAdminLoginModal();
+        return;
+    }
+    actionCallback();
+}
 
 function escapeHtml(str) {
     if (!str) return '';
@@ -71,7 +181,6 @@ function getLocalTodayString() {
 
 // --- VIEW SWITCHING ---
 function switchView(view) {
-    console.log("Switching view to:", view);
     currentView = view;
 
     const btnRooms = document.getElementById('viewRoomsBtn');
@@ -214,7 +323,6 @@ function renderDutyCalendar() {
     let startingDay = firstDay.getDay() - 1;
     if (startingDay < 0) startingDay = 6;
 
-    // Blank cells before month start
     for (let i = 0; i < startingDay; i++) {
         const blank = document.createElement('div');
         blank.className = 'cal-day-card empty-day';
@@ -243,6 +351,8 @@ function renderDutyCalendar() {
                 'replaced': '<span class="cal-status-tag status-skipped">🔄 Заменено</span>'
             }[item.status] || '';
 
+            const editBtnHtml = isAdmin ? `<button type="button" class="btn btn-secondary btn-sm" onclick="openEditDutyModal('${dateStr}', 7, '${item.room_number}', '${item.status}')" title="Переназначить комнату">✏️</button>` : '';
+
             dutyItemsHtml = `
                 <div class="cal-duty-badge f7">
                     <div class="cal-duty-header">
@@ -252,7 +362,7 @@ function renderDutyCalendar() {
                     <div class="cal-duty-res">${escapeHtml(resListStr)}</div>
                     <div class="cal-card-actions">
                         ${item.status !== 'completed' ? `<button type="button" class="btn btn-secondary btn-sm" onclick="handleMarkDutyDone('${dateStr}', 7)" title="Отметить выполненным">✅</button>` : ''}
-                        <button type="button" class="btn btn-secondary btn-sm" onclick="openEditDutyModal('${dateStr}', 7, '${item.room_number}', '${item.status}')" title="Переназначить комнату">✏️</button>
+                        ${editBtnHtml}
                     </div>
                 </div>
             `;
@@ -289,29 +399,31 @@ async function handleMarkDutyDone(dutyDate, floor) {
 }
 
 function openEditDutyModal(dutyDate, floor, currentRoom, currentStatus) {
-    document.getElementById('dutyModalTitle').innerText = `Дежурство на ${dutyDate}`;
-    document.getElementById('dutyDate').value = dutyDate;
-    document.getElementById('dutyFloor').value = 7;
-    document.getElementById('dutyDateDisplay').value = `${dutyDate} (7 этаж)`;
-    document.getElementById('dutyStatus').value = currentStatus || 'pending';
-    document.getElementById('dutyNotes').value = '';
+    requireAdminPermission(() => {
+        document.getElementById('dutyModalTitle').innerText = `Дежурство на ${dutyDate}`;
+        document.getElementById('dutyDate').value = dutyDate;
+        document.getElementById('dutyFloor').value = 7;
+        document.getElementById('dutyDateDisplay').value = `${dutyDate} (7 этаж)`;
+        document.getElementById('dutyStatus').value = currentStatus || 'pending';
+        document.getElementById('dutyNotes').value = '';
 
-    const select = document.getElementById('dutyRoomNumber');
-    select.innerHTML = '';
+        const select = document.getElementById('dutyRoomNumber');
+        select.innerHTML = '';
 
-    if (globalFloorsData && globalFloorsData.floors) {
-        const rooms = globalFloorsData.floors[7] || [];
-        rooms.forEach(rm => {
-            const option = document.createElement('option');
-            option.value = rm.room_number;
-            const resCount = rm.residents.length;
-            option.innerText = `Комната ${rm.room_number} (${resCount} чел.) ${resCount === 0 ? '[Пустая]' : ''}`;
-            if (rm.room_number === currentRoom) option.selected = true;
-            select.appendChild(option);
-        });
-    }
+        if (globalFloorsData && globalFloorsData.floors) {
+            const rooms = globalFloorsData.floors[7] || [];
+            rooms.forEach(rm => {
+                const option = document.createElement('option');
+                option.value = rm.room_number;
+                const resCount = rm.residents.length;
+                option.innerText = `Комната ${rm.room_number} (${resCount} чел.) ${resCount === 0 ? '[Пустая]' : ''}`;
+                if (rm.room_number === currentRoom) option.selected = true;
+                select.appendChild(option);
+            });
+        }
 
-    document.getElementById('dutyModal').classList.add('active');
+        document.getElementById('dutyModal').classList.add('active');
+    });
 }
 
 function closeDutyModal() {
@@ -332,7 +444,7 @@ async function handleSaveDuty(event) {
     try {
         const res = await fetch('/api/duty/assign', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: getAdminHeaders(),
             body: JSON.stringify(payload)
         });
 
@@ -341,7 +453,8 @@ async function handleSaveDuty(event) {
             fetchTodayDuty();
             fetchDutyCalendar();
         } else {
-            alert("Ошибка сохранения дежурства.");
+            const errData = await res.json();
+            alert(errData.error || "Ошибка сохранения дежурства.");
         }
     } catch (err) {
         console.error("Error saving duty:", err);
@@ -367,7 +480,6 @@ function renderApp() {
     const floors = globalFloorsData.floors;
     const unassigned = globalFloorsData.unassigned || [];
 
-    // Render Floor 2 and Floor 7
     [2, 7].forEach(floorNum => {
         if (currentFilter !== 'all' && currentFilter !== 'temp' && currentFilter !== String(floorNum)) {
             return;
@@ -412,7 +524,6 @@ function renderApp() {
         });
     });
 
-    // Render Unassigned / Waiting List
     if (currentFilter === 'all' || currentFilter === 'waiting') {
         const filteredUnassigned = unassigned.filter(r => {
             if (!query) return true;
@@ -502,6 +613,15 @@ function renderResidentItem(res) {
     const nickHtml = res.nickname ? `<span class="nick-tag">@${escapeHtml(res.nickname)}</span>` : '';
     const isTempHtml = res.status === '14_days' ? `<span class="nick-tag" style="background:rgba(245,158,11,0.2); color:var(--amber-accent);"><i class="fa-solid fa-clock"></i> 14 дней</span>` : '';
 
+    const adminActionsHtml = isAdmin ? `
+        <button type="button" class="btn btn-secondary btn-sm" onclick="openEditResidentModalById(${res.id})" title="Редактировать / Переселить">
+            <i class="fa-solid fa-pen"></i>
+        </button>
+        <button type="button" class="btn btn-danger btn-sm" onclick="handleEvictResidentById(${res.id})" title="Выселить">
+            <i class="fa-solid fa-user-minus"></i>
+        </button>
+    ` : '';
+
     item.innerHTML = `
         <div class="res-info">
             <div class="res-avatar">${escapeHtml(initials)}</div>
@@ -514,12 +634,7 @@ function renderResidentItem(res) {
             </div>
         </div>
         <div class="res-actions">
-            <button type="button" class="btn btn-secondary btn-sm" onclick="openEditResidentModalById(${res.id})" title="Редактировать / Переселить">
-                <i class="fa-solid fa-pen"></i>
-            </button>
-            <button type="button" class="btn btn-danger btn-sm" onclick="handleEvictResidentById(${res.id})" title="Выселить">
-                <i class="fa-solid fa-user-minus"></i>
-            </button>
+            ${adminActionsHtml}
         </div>
     `;
     return item;
@@ -533,26 +648,30 @@ function getPluralBeds(num) {
 
 // Modal Handlers
 function openAddResidentModal() {
-    document.getElementById('modalTitle').innerText = 'Заселение нового жильца';
-    document.getElementById('resId').value = '';
-    document.getElementById('resFullName').value = '';
-    document.getElementById('resNickname').value = '';
-    document.getElementById('resProfileUrl').value = '';
-    document.getElementById('resGender').value = 'M';
-    document.getElementById('resStatus').value = 'permanent';
-    document.getElementById('resNotes').value = '';
+    requireAdminPermission(() => {
+        document.getElementById('modalTitle').innerText = 'Заселение нового жильца';
+        document.getElementById('resId').value = '';
+        document.getElementById('resFullName').value = '';
+        document.getElementById('resNickname').value = '';
+        document.getElementById('resProfileUrl').value = '';
+        document.getElementById('resGender').value = 'M';
+        document.getElementById('resStatus').value = 'permanent';
+        document.getElementById('resNotes').value = '';
 
-    updateRoomOptions();
-    document.getElementById('residentModal').classList.add('active');
+        updateRoomOptions();
+        document.getElementById('residentModal').classList.add('active');
+    });
 }
 
 function openEditResidentModalById(resId) {
-    const res = residentsMap.get(resId);
-    if (!res) {
-        alert("Жилец не найден.");
-        return;
-    }
-    openEditResidentModal(res);
+    requireAdminPermission(() => {
+        const res = residentsMap.get(resId);
+        if (!res) {
+            alert("Жилец не найден.");
+            return;
+        }
+        openEditResidentModal(res);
+    });
 }
 
 function openEditResidentModal(res) {
@@ -616,7 +735,7 @@ async function handleSaveResident(event) {
     try {
         const res = await fetch(url, {
             method: method,
-            headers: { 'Content-Type': 'application/json' },
+            headers: getAdminHeaders(),
             body: JSON.stringify(payload)
         });
 
@@ -626,7 +745,8 @@ async function handleSaveResident(event) {
             fetchFloorsData();
             fetchTodayDuty();
         } else {
-            alert("Ошибка сохранения данных.");
+            const errData = await res.json();
+            alert(errData.error || "Ошибка сохранения данных.");
         }
     } catch (err) {
         console.error("Error saving resident:", err);
@@ -634,45 +754,55 @@ async function handleSaveResident(event) {
 }
 
 async function handleEvictResidentById(resId) {
-    const res = residentsMap.get(resId);
-    if (!res) return;
+    requireAdminPermission(async () => {
+        const res = residentsMap.get(resId);
+        if (!res) return;
 
-    if (!confirm(`Вы действительно хотите выселить жильца "${res.full_name}"?`)) return;
+        if (!confirm(`Вы действительно хотите выселить жильца "${res.full_name}"?`)) return;
 
-    try {
-        const apiRes = await fetch(`/api/residents/${resId}`, { method: 'DELETE' });
-        if (apiRes.ok) {
-            fetchStats();
-            fetchFloorsData();
-            fetchTodayDuty();
+        try {
+            const apiRes = await fetch(`/api/residents/${resId}`, {
+                method: 'DELETE',
+                headers: getAdminHeaders()
+            });
+            if (apiRes.ok) {
+                fetchStats();
+                fetchFloorsData();
+                fetchTodayDuty();
+            } else {
+                const errData = await apiRes.json();
+                alert(errData.error || "Ошибка выселения.");
+            }
+        } catch (err) {
+            console.error("Error evicting resident:", err);
         }
-    } catch (err) {
-        console.error("Error evicting resident:", err);
-    }
+    });
 }
 
 async function openLogsModal() {
-    try {
-        const res = await fetch('/api/logs');
-        const logs = await res.json();
+    requireAdminPermission(async () => {
+        try {
+            const res = await fetch('/api/logs', { headers: getAdminHeaders() });
+            const logs = await res.json();
 
-        const tbody = document.getElementById('logsTableBody');
-        tbody.innerHTML = '';
+            const tbody = document.getElementById('logsTableBody');
+            tbody.innerHTML = '';
 
-        logs.forEach(log => {
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td style="white-space:nowrap; color:var(--text-muted);">${log.timestamp}</td>
-                <td><strong style="color:var(--primary);">${escapeHtml(log.action)}</strong></td>
-                <td>${escapeHtml(log.details)}</td>
-            `;
-            tbody.appendChild(tr);
-        });
+            logs.forEach(log => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td style="white-space:nowrap; color:var(--text-muted);">${log.timestamp}</td>
+                    <td><strong style="color:var(--primary);">${escapeHtml(log.action)}</strong></td>
+                    <td>${escapeHtml(log.details)}</td>
+                `;
+                tbody.appendChild(tr);
+            });
 
-        document.getElementById('logsModal').classList.add('active');
-    } catch (err) {
-        console.error("Error fetching logs:", err);
-    }
+            document.getElementById('logsModal').classList.add('active');
+        } catch (err) {
+            console.error("Error fetching logs:", err);
+        }
+    });
 }
 
 function closeLogsModal() {

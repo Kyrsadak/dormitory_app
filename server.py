@@ -15,6 +15,9 @@ PORT = 8080
 PUBLIC_DIR = os.path.join(os.path.dirname(__file__), "public")
 EXCEL_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "Лист Microsoft Excel.xlsx"))
 
+ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "admin2026")
+ADMIN_TOKEN = "admin_secret_token_dormitory_2026"
+
 class DormitoryHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=PUBLIC_DIR, **kwargs)
@@ -30,7 +33,7 @@ class DormitoryHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         self.send_header("Content-Type", "application/json; charset=utf-8")
         self.send_header("Access-Control-Allow-Origin", "*")
         self.send_header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
-        self.send_header("Access-Control-Allow-Headers", "Content-Type")
+        self.send_header("Access-Control-Allow-Headers", "Content-Type, X-Admin-Token")
         self.end_headers()
         self.wfile.write(json.dumps(data, ensure_ascii=False).encode("utf-8"))
 
@@ -41,11 +44,19 @@ class DormitoryHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         body = self.rfile.read(content_length).decode('utf-8')
         return json.loads(body)
 
+    def _is_admin(self):
+        token = self.headers.get("X-Admin-Token", "")
+        if not token and "Authorization" in self.headers:
+            auth = self.headers.get("Authorization", "")
+            if auth.startswith("Bearer "):
+                token = auth[7:]
+        return token == ADMIN_TOKEN
+
     def do_OPTIONS(self):
         self.send_response(200)
         self.send_header("Access-Control-Allow-Origin", "*")
         self.send_header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
-        self.send_header("Access-Control-Allow-Headers", "Content-Type")
+        self.send_header("Access-Control-Allow-Headers", "Content-Type, X-Admin-Token")
         self.end_headers()
 
     def do_GET(self):
@@ -65,6 +76,9 @@ class DormitoryHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                 return
 
             elif path == "/api/logs":
+                if not self._is_admin():
+                    self._send_json({"error": "Требуется авторизация администратора"}, status=401)
+                    return
                 logs = db.get_activity_logs()
                 self._send_json(logs)
                 return
@@ -112,7 +126,20 @@ class DormitoryHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             parsed_url = urllib.parse.urlparse(self.path)
             path = parsed_url.path
 
-            if path == "/api/residents":
+            if path == "/api/admin/login":
+                body = self._read_body_json()
+                password = body.get("password", "").strip()
+
+                if password == ADMIN_PASSWORD:
+                    self._send_json({"success": True, "token": ADMIN_TOKEN, "message": "Авторизация успешна"})
+                else:
+                    self._send_json({"success": False, "error": "Неверный пароль администратора"}, status=401)
+                return
+
+            elif path == "/api/residents":
+                if not self._is_admin():
+                    self._send_json({"error": "Требуются права администратора"}, status=401)
+                    return
                 body = self._read_body_json()
                 full_name = body.get("full_name", "").strip()
                 nickname = body.get("nickname", "").strip()
@@ -132,6 +159,9 @@ class DormitoryHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                 return
 
             elif path == "/api/duty/assign":
+                if not self._is_admin():
+                    self._send_json({"error": "Требуются права администратора"}, status=401)
+                    return
                 body = self._read_body_json()
                 duty_date = body.get("duty_date")
                 floor = 7
@@ -145,6 +175,7 @@ class DormitoryHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                 return
 
             elif path == "/api/duty/status":
+                # Duty completion is allowed for admin AND via telegram bot / residents
                 body = self._read_body_json()
                 duty_date = body.get("duty_date")
                 floor = 7
@@ -172,6 +203,9 @@ class DormitoryHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             path = parsed_url.path
 
             if path.startswith("/api/residents/"):
+                if not self._is_admin():
+                    self._send_json({"error": "Требуются права администратора"}, status=401)
+                    return
                 res_id = int(path.split("/")[-1])
                 body = self._read_body_json()
 
@@ -199,6 +233,9 @@ class DormitoryHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             path = parsed_url.path
 
             if path.startswith("/api/residents/"):
+                if not self._is_admin():
+                    self._send_json({"error": "Требуются права администратора"}, status=401)
+                    return
                 res_id = int(path.split("/")[-1])
                 db.evict_resident(res_id)
                 excel_sync.export_db_to_excel(db.DB_PATH, EXCEL_PATH)
