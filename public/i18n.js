@@ -97,7 +97,109 @@ const I18N_TRANSLATIONS = {
         btn_save_duty: "Назначить дежурного",
 
         // Footer & Toast
-        footer_copyright: "Система Управления Общежитием v2.0 • Все права защищены"
+        footer_copyright: "Система Управления Общежитием v2.0 • Все права защищены",
+
+        // Admin auth buttons
+        btn_admin_login: "Вход для админа",
+        btn_admin_logout: "Выйти из админа",
+        admin_login_label: "Введите пароль администратора *",
+        admin_login_btn: "Войти",
+        admin_modal_title: "Вход Администратора",
+        admin_require_msg: "🔒 Эта функция доступна только Администратору. Пожалуйста, войдите с помощью пароля администратора.",
+        err_wrong_password: "Неверный пароль администратора",
+        err_connection: "Ошибка соединения с сервером",
+        err_save: "Ошибка сохранения данных.",
+        err_duty_save: "Ошибка сохранения дежурства.",
+        err_evict: "Ошибка выселения.",
+        err_not_found: "Жилец не найден.",
+
+        // Floor / Room rendering (app.js)
+        floor_label: "{floor} Этаж",
+        floor2_badge: "Женский блок",
+        floor7_badge: "Мужской блок",
+        rooms_count: "(14 комнат)",
+        waiting_section_title: "В очереди / Без комнаты",
+        waiting_badge: "Список ожидания ({count} чел.)",
+        waiting_empty: "В очереди никого нет",
+        waiting_icon_label: "Ожидающие",
+        people_count: "{count} чел.",
+        occ_count: "{occ} / {cap} чел.",
+        cap_6: "6 мест",
+        cap_4: "4 места",
+
+        // Resident item
+        tag_14days: "14 дней",
+        confirm_evict: "Вы действительно хотите выселить жильца \"{name}\"?",
+
+        // Room options in select
+        room_option_queue: "-- В очередь (Без комнаты) --",
+        room_option_label: "Комната {room} ({occ}/{cap} чел.) {extra}",
+        room_option_6beds: "[6-местная]",
+        duty_room_option: "Комната {room} ({count} чел.) {empty}",
+        duty_room_empty_tag: "[Пустая]",
+
+        // Modal titles / labels (dynamic)
+        modal_add_title_dynamic: "Заселение нового жильца",
+        modal_edit_title_dynamic: "Редактирование: {name}",
+        duty_modal_title_dynamic: "Дежурство на {date}",
+        duty_floor_display: "{date} (7 этаж)",
+
+        // Calendar
+        cal_today_label: "СЕГОДНЯ",
+        cal_no_residents: "Без жильцов",
+        cal_status_completed: "✅ Выполнено",
+        cal_status_pending: "⏳ Запланировано",
+        cal_status_skipped: "⚠️ Пропущено",
+        cal_status_replaced: "🔄 Заменено",
+        cal_day_header_7floor: "🔷 Комн. {room}",
+        btn_prev: "Назад",
+        btn_next: "Вперед",
+
+        // Header subtitle
+        header_subtitle: "База данных SQLite (PROD) • Дежурства по кухне (7 Этаж)",
+
+        // Duty banner
+        banner_floor7: "🔷 7 Этаж:",
+        banner_room: "Комната {room}",
+        banner_no_residents: "Нет жильцов",
+
+        // Logs modal
+        logs_modal_title: "Журнал действий аудита",
+        col_time_log: "Время",
+        col_action_log: "Действие",
+        col_details_log: "Подробности",
+        btn_close: "Закрыть",
+
+        // Form labels & placeholders (modal)
+        ph_fullname: "Например: Иванов Иван Иванович",
+        ph_nickname: "Например: ivanov_i",
+        ph_profile: "https://platform.21-school.ru/admin/profile/...",
+        ph_notes: "Дополнительная информация...",
+        ph_duty_notes: "Причина смены или заметка...",
+        label_notes: "Заметки / Примечание",
+        label_profile_opt: "Ссылка на профиль (опционально)",
+        label_duty_room_required: "Дежурная Комната *",
+        label_duty_status: "Статус дежурства",
+        label_duty_notes: "Примечание",
+        duty_status_scheduled: "⏳ Запланировано",
+        duty_status_completed_opt: "✅ Выполнено",
+        duty_status_skipped_opt: "⚠️ Пропущено",
+        duty_status_replaced_opt: "🔄 Перенесено / Заменено",
+        select_male: "Мужской",
+        select_female: "Женский",
+        select_permanent: "Постоянный жилец",
+        select_14days: "Временное проживание (14 дней)",
+        select_waiting: "В очереди",
+        btn_save_resident: "Сохранить",
+
+        // Calendar days of week
+        cal_dow_mon: "Пн",
+        cal_dow_tue: "Вт",
+        cal_dow_wed: "Ср",
+        cal_dow_thu: "Чт",
+        cal_dow_fri: "Пт",
+        cal_dow_sat: "Сб",
+        cal_dow_sun: "Вс"
     },
     en: {
         app_title: "Dormitory Management System",
@@ -187,7 +289,97 @@ const I18N_TRANSLATIONS = {
         label_duty_room: "Select Duty Room",
         btn_save_duty: "Assign Duty",
 
-        footer_copyright: "Dormitory Management System v2.0 • All rights reserved"
+        footer_copyright: "Dormitory Management System v2.0 • All rights reserved",
+
+        btn_admin_login: "Admin Login",
+        btn_admin_logout: "Logout Admin",
+        admin_login_label: "Enter admin password *",
+        admin_login_btn: "Login",
+        admin_modal_title: "Administrator Login",
+        admin_require_msg: "🔒 This feature is available to Administrators only. Please log in with the admin password.",
+        err_wrong_password: "Wrong admin password",
+        err_connection: "Server connection error",
+        err_save: "Error saving data.",
+        err_duty_save: "Error saving duty.",
+        err_evict: "Error evicting resident.",
+        err_not_found: "Resident not found.",
+
+        floor_label: "Floor {floor}",
+        floor2_badge: "Female block",
+        floor7_badge: "Male block",
+        rooms_count: "(14 rooms)",
+        waiting_section_title: "Waiting List / No Room",
+        waiting_badge: "Waiting list ({count})",
+        waiting_empty: "No one in the waiting list",
+        waiting_icon_label: "Waiting",
+        people_count: "{count} people",
+        occ_count: "{occ} / {cap} beds",
+        cap_6: "6 beds",
+        cap_4: "4 beds",
+
+        tag_14days: "14 days",
+        confirm_evict: "Are you sure you want to evict \"{name}\"?",
+
+        room_option_queue: "-- Waiting list (No room) --",
+        room_option_label: "Room {room} ({occ}/{cap}) {extra}",
+        room_option_6beds: "[6-bed]",
+        duty_room_option: "Room {room} ({count}) {empty}",
+        duty_room_empty_tag: "[Empty]",
+
+        modal_add_title_dynamic: "Check-in New Resident",
+        modal_edit_title_dynamic: "Editing: {name}",
+        duty_modal_title_dynamic: "Duty on {date}",
+        duty_floor_display: "{date} (7th floor)",
+
+        cal_today_label: "TODAY",
+        cal_no_residents: "No residents",
+        cal_status_completed: "✅ Completed",
+        cal_status_pending: "⏳ Scheduled",
+        cal_status_skipped: "⚠️ Skipped",
+        cal_status_replaced: "🔄 Replaced",
+        cal_day_header_7floor: "🔷 Room {room}",
+        btn_prev: "Back",
+        btn_next: "Next",
+
+        header_subtitle: "SQLite Database (PROD) • Kitchen Duty (7th Floor)",
+        banner_floor7: "🔷 7th Floor:",
+        banner_room: "Room {room}",
+        banner_no_residents: "No residents",
+
+        logs_modal_title: "System Audit Logs",
+        col_time_log: "Time",
+        col_action_log: "Action",
+        col_details_log: "Details",
+        btn_close: "Close",
+
+        ph_fullname: "e.g. Ivan Ivanov",
+        ph_nickname: "e.g. ivanov_i",
+        ph_profile: "https://platform.21-school.ru/admin/profile/...",
+        ph_notes: "Additional info...",
+        ph_duty_notes: "Reason for change or note...",
+        label_notes: "Notes / Remarks",
+        label_profile_opt: "Profile link (optional)",
+        label_duty_room_required: "Duty Room *",
+        label_duty_status: "Duty Status",
+        label_duty_notes: "Note",
+        duty_status_scheduled: "⏳ Scheduled",
+        duty_status_completed_opt: "✅ Completed",
+        duty_status_skipped_opt: "⚠️ Skipped",
+        duty_status_replaced_opt: "🔄 Rescheduled / Replaced",
+        select_male: "Male",
+        select_female: "Female",
+        select_permanent: "Permanent resident",
+        select_14days: "Temporary (14 days)",
+        select_waiting: "Waiting list",
+        btn_save_resident: "Save",
+
+        cal_dow_mon: "Mon",
+        cal_dow_tue: "Tue",
+        cal_dow_wed: "Wed",
+        cal_dow_thu: "Thu",
+        cal_dow_fri: "Fri",
+        cal_dow_sat: "Sat",
+        cal_dow_sun: "Sun"
     },
     uz: {
         app_title: "Yotoqxona Boshqaruv Tizimi",
@@ -277,7 +469,97 @@ const I18N_TRANSLATIONS = {
         label_duty_room: "Navbatchi xonani tanlang",
         btn_save_duty: "Navbatchini tayinlash",
 
-        footer_copyright: "Yotoqxona Boshqaruv Tizimi v2.0 • Barcha huquqlar himoyalangan"
+        footer_copyright: "Yotoqxona Boshqaruv Tizimi v2.0 • Barcha huquqlar himoyalangan",
+
+        btn_admin_login: "Admin kirish",
+        btn_admin_logout: "Admindan chiqish",
+        admin_login_label: "Admin parolini kiriting *",
+        admin_login_btn: "Kirish",
+        admin_modal_title: "Administrator Kirishi",
+        admin_require_msg: "🔒 Bu funksiya faqat Administratorlar uchun mavjud. Iltimos, admin paroli bilan kiring.",
+        err_wrong_password: "Noto'g'ri admin paroli",
+        err_connection: "Server bilan ulanish xatosi",
+        err_save: "Ma'lumotlarni saqlashda xato.",
+        err_duty_save: "Navbatchilikni saqlashda xato.",
+        err_evict: "Talabani chiqarishda xato.",
+        err_not_found: "Talaba topilmadi.",
+
+        floor_label: "{floor}-Qavat",
+        floor2_badge: "Qizlar bloki",
+        floor7_badge: "Yigitlar bloki",
+        rooms_count: "(14 xona)",
+        waiting_section_title: "Navbatda / Xonasiz",
+        waiting_badge: "Kutish ro'yxati ({count} kishi)",
+        waiting_empty: "Navbatda hech kim yo'q",
+        waiting_icon_label: "Kutayotganlar",
+        people_count: "{count} kishi",
+        occ_count: "{occ} / {cap} kishi",
+        cap_6: "6 o'rin",
+        cap_4: "4 o'rin",
+
+        tag_14days: "14 kun",
+        confirm_evict: "\"{name}\" talabani chiqarishni tasdiqlaysizmi?",
+
+        room_option_queue: "-- Navbatga (Xonasiz) --",
+        room_option_label: "{room}-Xona ({occ}/{cap} kishi) {extra}",
+        room_option_6beds: "[6-o'rinli]",
+        duty_room_option: "{room}-Xona ({count} kishi) {empty}",
+        duty_room_empty_tag: "[Bo'sh]",
+
+        modal_add_title_dynamic: "Yangi talabani joylashtirish",
+        modal_edit_title_dynamic: "Tahrirlash: {name}",
+        duty_modal_title_dynamic: "{date} sanasidagi navbatchilik",
+        duty_floor_display: "{date} (7-qavat)",
+
+        cal_today_label: "BUGUN",
+        cal_no_residents: "Yashovchi yo'q",
+        cal_status_completed: "✅ Bajarildi",
+        cal_status_pending: "⏳ Rejalashtirilgan",
+        cal_status_skipped: "⚠️ O'tkazib yuborildi",
+        cal_status_replaced: "🔄 Almashtirildi",
+        cal_day_header_7floor: "🔷 {room}-Xona",
+        btn_prev: "Orqaga",
+        btn_next: "Oldinga",
+
+        header_subtitle: "SQLite Ma'lumotlar Bazasi (PROD) • Oshxona Navbatchiligi (7-Qavat)",
+        banner_floor7: "🔷 7-Qavat:",
+        banner_room: "{room}-Xona",
+        banner_no_residents: "Yashovchi yo'q",
+
+        logs_modal_title: "Tizim audit jurnali",
+        col_time_log: "Vaqt",
+        col_action_log: "Harakat",
+        col_details_log: "Tafsilotlar",
+        btn_close: "Yopish",
+
+        ph_fullname: "Masalan: Ivanov Ivan",
+        ph_nickname: "Masalan: ivanov_i",
+        ph_profile: "https://platform.21-school.ru/admin/profile/...",
+        ph_notes: "Qo'shimcha ma'lumot...",
+        ph_duty_notes: "Almashtirish sababi yoki izoh...",
+        label_notes: "Izohlar / Eslatmalar",
+        label_profile_opt: "Profil havolasi (ixtiyoriy)",
+        label_duty_room_required: "Navbatchi Xona *",
+        label_duty_status: "Navbatchilik holati",
+        label_duty_notes: "Izoh",
+        duty_status_scheduled: "⏳ Rejalashtirilgan",
+        duty_status_completed_opt: "✅ Bajarildi",
+        duty_status_skipped_opt: "⚠️ O'tkazib yuborildi",
+        duty_status_replaced_opt: "🔄 Ko'chirildi / Almashtirildi",
+        select_male: "Erkak",
+        select_female: "Ayol",
+        select_permanent: "Doimiy yashovchi",
+        select_14days: "Vaqtinchalik (14 kun)",
+        select_waiting: "Navbatda",
+        btn_save_resident: "Saqlash",
+
+        cal_dow_mon: "Du",
+        cal_dow_tue: "Se",
+        cal_dow_wed: "Ch",
+        cal_dow_thu: "Pa",
+        cal_dow_fri: "Ju",
+        cal_dow_sat: "Sh",
+        cal_dow_sun: "Ya"
     }
 };
 
@@ -321,6 +603,13 @@ class I18nEngine {
             } else {
                 el.textContent = translation;
             }
+        });
+
+        // Translate placeholder-only elements (inputs, textareas)
+        const phElements = document.querySelectorAll("[data-i18n-placeholder]");
+        phElements.forEach(el => {
+            const key = el.getAttribute("data-i18n-placeholder");
+            el.placeholder = this.t(key);
         });
 
         // Update select / button states if present

@@ -90,13 +90,10 @@ function updateAdminUI() {
     // Auth Button text
     const authBtn = document.getElementById('adminAuthBtn');
     if (authBtn) {
-        if (isAdmin) {
-            authBtn.innerHTML = `<i class="fa-solid fa-right-from-bracket"></i> Выйти из админа`;
-            authBtn.className = "btn btn-danger";
-        } else {
-            authBtn.innerHTML = `<i class="fa-solid fa-lock"></i> Вход для админа`;
-            authBtn.className = "btn btn-secondary";
-        }
+        const icon = isAdmin ? 'fa-right-from-bracket' : 'fa-lock';
+        const label = isAdmin ? window.i18n.t('btn_admin_logout') : window.i18n.t('btn_admin_login');
+        authBtn.innerHTML = `<i class="fa-solid ${icon}"></i> <span>${label}</span>`;
+        authBtn.className = isAdmin ? "btn btn-danger" : "btn btn-secondary";
     }
 
     if (currentView === 'rooms') renderApp();
@@ -148,14 +145,14 @@ async function handleAdminLoginSubmit(event) {
             updateAdminUI();
         } else {
             if (errDiv) {
-                errDiv.innerText = data.error || 'Неверный пароль администратора';
+                errDiv.innerText = data.error || window.i18n.t('err_wrong_password');
                 errDiv.style.display = 'block';
             }
         }
     } catch (err) {
         console.error("Login error:", err);
         if (errDiv) {
-            errDiv.innerText = 'Ошибка соединения с сервером';
+            errDiv.innerText = window.i18n.t('err_connection');
             errDiv.style.display = 'block';
         }
     }
@@ -163,7 +160,7 @@ async function handleAdminLoginSubmit(event) {
 
 function requireAdminPermission(actionCallback) {
     if (!isAdmin) {
-        alert("🔒 Эта функция доступна только Администратору. Пожалуйста, войдите с помощью пароля администратора.");
+        alert(window.i18n.t('admin_require_msg'));
         openAdminLoginModal();
         return;
     }
@@ -277,11 +274,11 @@ function renderTodayDutyBanner(todayData) {
         const pillar = document.createElement('div');
         pillar.className = 'duty-pill duty-pill-f7';
         
-        const resNames = item.residents.map(r => r.full_name.split(' ')[0]).join(', ') || 'Нет жильцов';
+        const resNames = item.residents.map(r => r.full_name.split(' ')[0]).join(', ') || window.i18n.t('banner_no_residents');
 
         pillar.innerHTML = `
-            <span>🔷 7 Этаж:</span>
-            <strong>Комната ${item.room_number}</strong>
+            <span>${window.i18n.t('banner_floor7')}</span>
+            <strong>${window.i18n.t('banner_room', {room: item.room_number})}</strong>
             <span style="opacity:0.8; font-weight:normal;">(${escapeHtml(resNames)})</span>
             ${item.status === 'completed' ? '✅' : ''}
         `;
@@ -357,25 +354,25 @@ function renderDutyCalendar() {
 
         let dutyItemsHtml = '';
         if (item) {
-            const resListStr = item.residents.map(r => r.full_name.split(' ')[0]).join(', ') || 'Без жильцов';
+        const resListStr = item.residents.map(r => r.full_name.split(' ')[0]).join(', ') || window.i18n.t('cal_no_residents');
             const statusTag = {
-                'completed': '<span class="cal-status-tag status-completed">✅ Выполнено</span>',
-                'pending': '<span class="cal-status-tag status-pending">⏳ Запланировано</span>',
-                'skipped': '<span class="cal-status-tag status-skipped">⚠️ Пропущено</span>',
-                'replaced': '<span class="cal-status-tag status-skipped">🔄 Заменено</span>'
+                'completed': `<span class="cal-status-tag status-completed">${window.i18n.t('cal_status_completed')}</span>`,
+                'pending': `<span class="cal-status-tag status-pending">${window.i18n.t('cal_status_pending')}</span>`,
+                'skipped': `<span class="cal-status-tag status-skipped">${window.i18n.t('cal_status_skipped')}</span>`,
+                'replaced': `<span class="cal-status-tag status-skipped">${window.i18n.t('cal_status_replaced')}</span>`
             }[item.status] || '';
 
-            const editBtnHtml = isAdmin ? `<button type="button" class="btn btn-secondary btn-sm" onclick="openEditDutyModal('${dateStr}', 7, '${item.room_number}', '${item.status}')" title="Переназначить комнату">✏️</button>` : '';
+            const editBtnHtml = isAdmin ? `<button type="button" class="btn btn-secondary btn-sm" onclick="openEditDutyModal('${dateStr}', 7, '${item.room_number}', '${item.status}')" title="${window.i18n.t('btn_change_duty_room')}">✏️</button>` : '';
 
             dutyItemsHtml = `
                 <div class="cal-duty-badge f7">
                     <div class="cal-duty-header">
-                        <span>🔷 Комн. ${item.room_number}</span>
+                        <span>${window.i18n.t('cal_day_header_7floor', {room: item.room_number})}</span>
                         ${statusTag}
                     </div>
                     <div class="cal-duty-res">${escapeHtml(resListStr)}</div>
                     <div class="cal-card-actions">
-                        ${item.status !== 'completed' ? `<button type="button" class="btn btn-secondary btn-sm" onclick="handleMarkDutyDone('${dateStr}', 7)" title="Отметить выполненным">✅</button>` : ''}
+                        ${item.status !== 'completed' ? `<button type="button" class="btn btn-secondary btn-sm" onclick="handleMarkDutyDone('${dateStr}', 7)" title="${window.i18n.t('btn_mark_duty_done')}">✅</button>` : ''}
                         ${editBtnHtml}
                     </div>
                 </div>
@@ -385,7 +382,7 @@ function renderDutyCalendar() {
         dayCard.innerHTML = `
             <div class="cal-date-num">
                 <span>${day}</span>
-                ${isToday ? '<span class="today-label">СЕГОДНЯ</span>' : ''}
+                ${isToday ? `<span class="today-label">${window.i18n.t('cal_today_label')}</span>` : ''}
             </div>
             <div class="cal-duty-items">
                 ${dutyItemsHtml}
@@ -414,10 +411,10 @@ async function handleMarkDutyDone(dutyDate, floor) {
 
 function openEditDutyModal(dutyDate, floor, currentRoom, currentStatus) {
     requireAdminPermission(() => {
-        document.getElementById('dutyModalTitle').innerText = `Дежурство на ${dutyDate}`;
+        document.getElementById('dutyModalTitle').innerText = window.i18n.t('duty_modal_title_dynamic', {date: dutyDate});
         document.getElementById('dutyDate').value = dutyDate;
         document.getElementById('dutyFloor').value = 7;
-        document.getElementById('dutyDateDisplay').value = `${dutyDate} (7 этаж)`;
+        document.getElementById('dutyDateDisplay').value = window.i18n.t('duty_floor_display', {date: dutyDate});
         document.getElementById('dutyStatus').value = currentStatus || 'pending';
         document.getElementById('dutyNotes').value = '';
 
@@ -430,7 +427,8 @@ function openEditDutyModal(dutyDate, floor, currentRoom, currentStatus) {
                 const option = document.createElement('option');
                 option.value = rm.room_number;
                 const resCount = rm.residents.length;
-                option.innerText = `Комната ${rm.room_number} (${resCount} чел.) ${resCount === 0 ? '[Пустая]' : ''}`;
+                const emptyTag = resCount === 0 ? window.i18n.t('duty_room_empty_tag') : '';
+                option.innerText = window.i18n.t('duty_room_option', {room: rm.room_number, count: resCount, empty: emptyTag});
                 if (rm.room_number === currentRoom) option.selected = true;
                 select.appendChild(option);
             });
@@ -468,7 +466,7 @@ async function handleSaveDuty(event) {
             fetchDutyCalendar();
         } else {
             const errData = await res.json();
-            alert(errData.error || "Ошибка сохранения дежурства.");
+            alert(errData.error || window.i18n.t('err_duty_save'));
         }
     } catch (err) {
         console.error("Error saving duty:", err);
@@ -500,9 +498,11 @@ function renderApp() {
         }
 
         const rooms = floors[floorNum] || [];
-        const genderLabel = floorNum === 2 ? 'Женский блок' : 'Мужской блок';
+        const genderLabel = floorNum === 2 ? window.i18n.t('floor2_badge') : window.i18n.t('floor7_badge');
         const genderBadgeClass = floorNum === 2 ? 'badge-female' : 'badge-male';
         const genderIcon = floorNum === 2 ? 'fa-venus' : 'fa-mars';
+        const floorLabel = window.i18n.t('floor_label', {floor: floorNum});
+        const roomsCount = window.i18n.t('rooms_count');
 
         const filteredRooms = rooms.filter(rm => {
             if (currentFilter === 'temp') {
@@ -523,8 +523,8 @@ function renderApp() {
 
         section.innerHTML = `
             <div class="section-title">
-                <h2>${floorNum} Этаж</h2>
-                <span class="floor-badge ${genderBadgeClass}"><i class="fa-solid ${genderIcon}"></i> ${genderLabel} (14 комнат)</span>
+                <h2>${floorLabel}</h2>
+                <span class="floor-badge ${genderBadgeClass}"><i class="fa-solid ${genderIcon}"></i> ${genderLabel} ${roomsCount}</span>
             </div>
             <div class="rooms-grid" id="floor-grid-${floorNum}"></div>
         `;
@@ -549,18 +549,18 @@ function renderApp() {
             section.className = 'floor-section';
             section.innerHTML = `
                 <div class="section-title">
-                    <h2>В очереди / Без комнаты</h2>
+                    <h2>${window.i18n.t('waiting_section_title')}</h2>
                     <span class="floor-badge badge-female" style="background:var(--red-bg); color:var(--red-accent); border-color:var(--red-border);">
-                        <i class="fa-solid fa-user-clock"></i> Список ожидания (${filteredUnassigned.length} чел.)
+                        <i class="fa-solid fa-user-clock"></i> ${window.i18n.t('waiting_badge', {count: filteredUnassigned.length})}
                     </span>
                 </div>
                 <div class="rooms-grid">
                     <div class="room-card">
                         <div class="room-card-header">
                             <div class="room-num" style="color:var(--red-accent);">
-                                <i class="fa-solid fa-user-slash"></i> Ожидающие
+                                <i class="fa-solid fa-user-slash"></i> ${window.i18n.t('waiting_icon_label')}
                             </div>
-                            <span class="occ-pill" style="background:var(--red-bg); color:var(--red-accent);">${filteredUnassigned.length} чел.</span>
+                            <span class="occ-pill" style="background:var(--red-bg); color:var(--red-accent);">${window.i18n.t('people_count', {count: filteredUnassigned.length})}</span>
                         </div>
                         <div class="resident-list" id="unassigned-list"></div>
                     </div>
@@ -570,7 +570,7 @@ function renderApp() {
 
             const listEl = section.querySelector('#unassigned-list');
             if (filteredUnassigned.length === 0) {
-                listEl.innerHTML = `<div class="bed-empty">В очереди никого нет</div>`;
+                listEl.innerHTML = `<div class="bed-empty">${window.i18n.t('waiting_empty')}</div>`;
             } else {
                 filteredUnassigned.forEach(res => {
                     listEl.appendChild(renderResidentItem(res));
@@ -588,7 +588,7 @@ function renderRoomCard(room) {
     const cap = room.capacity;
     const isFull = occ >= cap;
     const occClass = isFull ? 'occ-full' : 'occ-space';
-    const capLabel = cap === 6 ? '6 мест' : '4 места';
+    const capLabel = cap === 6 ? window.i18n.t('cap_6') : window.i18n.t('cap_4');
 
     card.innerHTML = `
         <div class="room-card-header">
@@ -597,7 +597,7 @@ function renderRoomCard(room) {
                 ${room.room_number}
                 <span class="room-capacity-tag">${capLabel}</span>
             </div>
-            <span class="occ-pill ${occClass}">${occ} / ${cap} чел.</span>
+            <span class="occ-pill ${occClass}">${window.i18n.t('occ_count', {occ, cap})}</span>
         </div>
         <div class="resident-list"></div>
     `;
@@ -625,7 +625,7 @@ function renderResidentItem(res) {
 
     const initials = res.full_name.split(' ').map(n => n[0]).slice(0, 2).join('');
     const nickHtml = res.nickname ? `<span class="nick-tag">@${escapeHtml(res.nickname)}</span>` : '';
-    const isTempHtml = res.status === '14_days' ? `<span class="nick-tag" style="background:rgba(245,158,11,0.2); color:var(--amber-accent);"><i class="fa-solid fa-clock"></i> 14 дней</span>` : '';
+    const isTempHtml = res.status === '14_days' ? `<span class="nick-tag" style="background:rgba(245,158,11,0.2); color:var(--amber-accent);"><i class="fa-solid fa-clock"></i> ${window.i18n.t('tag_14days')}</span>` : '';
 
     const adminActionsHtml = isAdmin ? `
         <button type="button" class="btn btn-secondary btn-sm" onclick="openEditResidentModalById(${res.id})" title="Редактировать / Переселить">
@@ -655,15 +655,22 @@ function renderResidentItem(res) {
 }
 
 function getPluralBeds(num) {
-    if (num === 1) return 'свободное койко-место';
-    if (num >= 2 && num <= 4) return 'свободных койко-места';
-    return 'свободных койко-мест';
+    const lang = window.i18n ? window.i18n.getLanguage() : 'ru';
+    if (lang === 'ru') {
+        if (num === 1) return 'свободное койко-место';
+        if (num >= 2 && num <= 4) return 'свободных койко-места';
+        return 'свободных койко-мест';
+    } else if (lang === 'uz') {
+        return "bo'sh o'rin";
+    } else {
+        return num === 1 ? 'available bed' : 'available beds';
+    }
 }
 
 // Modal Handlers
 function openAddResidentModal() {
     requireAdminPermission(() => {
-        document.getElementById('modalTitle').innerText = 'Заселение нового жильца';
+        document.getElementById('modalTitle').innerText = window.i18n.t('modal_add_title_dynamic');
         document.getElementById('resId').value = '';
         document.getElementById('resFullName').value = '';
         document.getElementById('resNickname').value = '';
@@ -681,7 +688,7 @@ function openEditResidentModalById(resId) {
     requireAdminPermission(() => {
         const res = residentsMap.get(resId);
         if (!res) {
-            alert("Жилец не найден.");
+            alert(window.i18n.t('err_not_found'));
             return;
         }
         openEditResidentModal(res);
@@ -689,7 +696,7 @@ function openEditResidentModalById(resId) {
 }
 
 function openEditResidentModal(res) {
-    document.getElementById('modalTitle').innerText = `Редактирование: ${res.full_name}`;
+    document.getElementById('modalTitle').innerText = window.i18n.t('modal_edit_title_dynamic', {name: res.full_name});
     document.getElementById('resId').value = res.id;
     document.getElementById('resFullName').value = res.full_name;
     document.getElementById('resNickname').value = res.nickname || '';
@@ -709,7 +716,7 @@ function closeResidentModal() {
 function updateRoomOptions(selectedRoom = '') {
     const select = document.getElementById('resRoomNumber');
     const gender = document.getElementById('resGender').value;
-    select.innerHTML = `<option value="">-- В очередь (Без комнаты) --</option>`;
+    select.innerHTML = `<option value="">${window.i18n.t('room_option_queue')}</option>`;
 
     if (!globalFloorsData) return;
 
@@ -723,7 +730,8 @@ function updateRoomOptions(selectedRoom = '') {
 
         const option = document.createElement('option');
         option.value = rm.room_number;
-        option.innerText = `Комната ${rm.room_number} (${occ}/${cap} чел.) ${cap === 6 ? '[6-местная]' : ''}`;
+        const extra = cap === 6 ? window.i18n.t('room_option_6beds') : '';
+        option.innerText = window.i18n.t('room_option_label', {room: rm.room_number, occ, cap, extra});
         if (isSelected) option.selected = true;
         select.appendChild(option);
     });
@@ -760,7 +768,7 @@ async function handleSaveResident(event) {
             fetchTodayDuty();
         } else {
             const errData = await res.json();
-            alert(errData.error || "Ошибка сохранения данных.");
+            alert(errData.error || window.i18n.t('err_save'));
         }
     } catch (err) {
         console.error("Error saving resident:", err);
@@ -772,7 +780,7 @@ async function handleEvictResidentById(resId) {
         const res = residentsMap.get(resId);
         if (!res) return;
 
-        if (!confirm(`Вы действительно хотите выселить жильца "${res.full_name}"?`)) return;
+        if (!confirm(window.i18n.t('confirm_evict', {name: res.full_name}))) return;
 
         try {
             const apiRes = await fetch(`/api/residents/${resId}`, {
@@ -785,7 +793,7 @@ async function handleEvictResidentById(resId) {
                 fetchTodayDuty();
             } else {
                 const errData = await apiRes.json();
-                alert(errData.error || "Ошибка выселения.");
+                alert(errData.error || window.i18n.t('err_evict'));
             }
         } catch (err) {
             console.error("Error evicting resident:", err);

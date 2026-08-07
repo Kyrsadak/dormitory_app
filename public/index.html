@@ -10,7 +10,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="styles.css?v=20260807_05">
+    <link rel="stylesheet" href="styles.css?v=20260807_06">
 </head>
 <body>
     <div class="app-layout">
@@ -23,7 +23,7 @@
                         <span data-i18n="app_title">Система Управления Общежитием</span>
                         <span class="admin-badge" id="adminBadge" style="display:none;"><i class="fa-solid fa-crown"></i> Админ</span>
                     </h1>
-                    <div class="subtitle">База данных SQLite (PROD) &bull; Дежурства по кухне (7 Этаж)</div>
+                    <div class="subtitle" data-i18n="header_subtitle">База данных SQLite (PROD) &bull; Дежурства по кухне (7 Этаж)</div>
                 </div>
             </div>
 
@@ -61,7 +61,7 @@
 
                 <!-- Admin Auth Button -->
                 <button type="button" class="btn btn-secondary" id="adminAuthBtn" onclick="toggleAdminAuth()">
-                    <i class="fa-solid fa-lock"></i> Вход для админа
+                    <i class="fa-solid fa-lock"></i> <span data-i18n="btn_admin_login">Вход для админа</span>
                 </button>
             </div>
 
@@ -136,9 +136,9 @@
 
             <!-- Calendar Controls (Visible in Calendar View) -->
             <div class="calendar-controls" id="calendarControls" style="display: none;">
-                <button type="button" class="btn btn-secondary btn-sm" onclick="changeCalendarMonth(-1)"><i class="fa-solid fa-chevron-left"></i> Назад</button>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="changeCalendarMonth(-1)"><i class="fa-solid fa-chevron-left"></i> <span data-i18n="btn_prev">Назад</span></button>
                 <span class="calendar-month-title" id="calendarMonthTitle">Август 2026</span>
-                <button type="button" class="btn btn-secondary btn-sm" onclick="changeCalendarMonth(1)">Вперед <i class="fa-solid fa-chevron-right"></i></button>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="changeCalendarMonth(1)"><span data-i18n="btn_next">Вперед</span> <i class="fa-solid fa-chevron-right"></i></button>
             </div>
 
             <div class="search-box" id="searchBoxContainer">
@@ -156,7 +156,7 @@
         <!-- Content Area: Calendar View -->
         <div id="calendarContainer" style="display: none;">
             <div class="calendar-grid-header">
-                <div>Пн</div><div>Вт</div><div>Ср</div><div>Чт</div><div>Пт</div><div>Сб</div><div>Вс</div>
+                <div data-i18n="cal_dow_mon">Пн</div><div data-i18n="cal_dow_tue">Вт</div><div data-i18n="cal_dow_wed">Ср</div><div data-i18n="cal_dow_thu">Чт</div><div data-i18n="cal_dow_fri">Пт</div><div data-i18n="cal_dow_sat">Сб</div><div data-i18n="cal_dow_sun">Вс</div>
             </div>
             <div class="calendar-days-grid" id="calendarDaysGrid">
                 <!-- Populated dynamically by app.js -->
@@ -168,18 +168,18 @@
     <div class="modal-overlay" id="adminLoginModal">
         <div class="modal-card" style="max-width:380px;">
             <div class="modal-header">
-                <h3><i class="fa-solid fa-lock" style="color:var(--amber-accent)"></i> Вход Администратора</h3>
+                <h3><i class="fa-solid fa-lock" style="color:var(--amber-accent)"></i> <span data-i18n="admin_modal_title">Вход Администратора</span></h3>
                 <button type="button" class="modal-close" onclick="closeAdminLoginModal()">&times;</button>
             </div>
             <form onsubmit="handleAdminLoginSubmit(event)">
                 <div class="form-group">
-                    <label>Введите пароль администратора *</label>
+                    <label data-i18n="admin_login_label">Введите пароль администратора *</label>
                     <input type="password" id="adminPasswordInput" required placeholder="••••••••">
                     <div id="adminLoginError" style="color:var(--red-accent); font-size:12px; margin-top:6px; display:none;"></div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" onclick="closeAdminLoginModal()">Отмена</button>
-                    <button type="submit" class="btn btn-primary"><i class="fa-solid fa-right-to-bracket"></i> Войти</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeAdminLoginModal()" data-i18n="btn_cancel">Отмена</button>
+                    <button type="submit" class="btn btn-primary"><i class="fa-solid fa-right-to-bracket"></i> <span data-i18n="admin_login_btn">Войти</span></button>
                 </div>
             </form>
         </div>
@@ -195,54 +195,54 @@
             <form id="residentForm" onsubmit="handleSaveResident(event)">
                 <input type="hidden" id="resId">
                 <div class="form-group">
-                    <label>ФИО Проживающего *</label>
-                    <input type="text" id="resFullName" required placeholder="Например: Иванов Иван Иванович">
+                    <label data-i18n="label_fullname">ФИО Проживающего *</label>
+                    <input type="text" id="resFullName" required data-i18n-placeholder="ph_fullname" placeholder="Например: Иванов Иван Иванович">
                 </div>
                 
                 <div class="form-row">
                     <div class="form-group">
-                        <label>Никнейм</label>
-                        <input type="text" id="resNickname" placeholder="Например: ivanov_i">
+                        <label data-i18n="label_nickname">Никнейм</label>
+                        <input type="text" id="resNickname" data-i18n-placeholder="ph_nickname" placeholder="Например: ivanov_i">
                     </div>
                     <div class="form-group">
-                        <label>Пол *</label>
+                        <label data-i18n="label_gender">Пол *</label>
                         <select id="resGender" required onchange="updateRoomOptions()">
-                            <option value="M">Мужской</option>
-                            <option value="F">Женский</option>
+                            <option value="M" data-i18n="select_male">Мужской</option>
+                            <option value="F" data-i18n="select_female">Женский</option>
                         </select>
                     </div>
                 </div>
 
                 <div class="form-row">
                     <div class="form-group">
-                        <label>Комната</label>
+                        <label data-i18n="label_room">Комната</label>
                         <select id="resRoomNumber">
-                            <option value="">-- В очередь (Без комнаты) --</option>
+                            <option value="" data-i18n="room_option_queue">-- В очередь (Без комнаты) --</option>
                         </select>
                     </div>
                     <div class="form-group">
-                        <label>Статус *</label>
+                        <label data-i18n="label_status">Статус *</label>
                         <select id="resStatus" required>
-                            <option value="permanent">Постоянный жилец</option>
-                            <option value="14_days">Временное проживание (14 дней)</option>
-                            <option value="waiting">В очереди</option>
+                            <option value="permanent" data-i18n="select_permanent">Постоянный жилец</option>
+                            <option value="14_days" data-i18n="select_14days">Временное проживание (14 дней)</option>
+                            <option value="waiting" data-i18n="select_waiting">В очереди</option>
                         </select>
                     </div>
                 </div>
 
                 <div class="form-group">
-                    <label>Ссылка на профиль (опционально)</label>
-                    <input type="url" id="resProfileUrl" placeholder="https://platform.21-school.ru/admin/profile/...">
+                    <label data-i18n="label_profile_opt">Ссылка на профиль (опционально)</label>
+                    <input type="url" id="resProfileUrl" data-i18n-placeholder="ph_profile" placeholder="https://platform.21-school.ru/admin/profile/...">
                 </div>
 
                 <div class="form-group">
-                    <label>Заметки / Примечание</label>
-                    <textarea id="resNotes" rows="2" placeholder="Дополнительная информация..."></textarea>
+                    <label data-i18n="label_notes">Заметки / Примечание</label>
+                    <textarea id="resNotes" rows="2" data-i18n-placeholder="ph_notes" placeholder="Дополнительная информация..."></textarea>
                 </div>
 
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" onclick="closeResidentModal()">Отмена</button>
-                    <button type="submit" class="btn btn-primary"><i class="fa-solid fa-floppy-disk"></i> Сохранить</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeResidentModal()" data-i18n="btn_cancel">Отмена</button>
+                    <button type="submit" class="btn btn-primary"><i class="fa-solid fa-floppy-disk"></i> <span data-i18n="btn_save_resident">Сохранить</span></button>
                 </div>
             </form>
         </div>
@@ -260,35 +260,35 @@
                 <input type="hidden" id="dutyFloor" value="7">
 
                 <div class="form-group">
-                    <label>Дата дежурства</label>
+                    <label data-i18n="label_duty_date">Дата дежурства</label>
                     <input type="text" id="dutyDateDisplay" readonly style="opacity:0.7;">
                 </div>
 
                 <div class="form-group">
-                    <label>Дежурная Комната *</label>
+                    <label data-i18n="label_duty_room_required">Дежурная Комната *</label>
                     <select id="dutyRoomNumber" required>
                         <!-- Populated by JS -->
                     </select>
                 </div>
 
                 <div class="form-group">
-                    <label>Статус дежурства</label>
+                    <label data-i18n="label_duty_status">Статус дежурства</label>
                     <select id="dutyStatus">
-                        <option value="pending">⏳ Запланировано</option>
-                        <option value="completed"> Выполнено</option>
-                        <option value="skipped">⚠️ Пропущено</option>
-                        <option value="replaced">🔄 Перенесено / Заменено</option>
+                        <option value="pending" data-i18n="duty_status_scheduled">⏳ Запланировано</option>
+                        <option value="completed" data-i18n="duty_status_completed_opt">✅ Выполнено</option>
+                        <option value="skipped" data-i18n="duty_status_skipped_opt">⚠️ Пропущено</option>
+                        <option value="replaced" data-i18n="duty_status_replaced_opt">🔄 Перенесено / Заменено</option>
                     </select>
                 </div>
 
                 <div class="form-group">
-                    <label>Примечание</label>
-                    <input type="text" id="dutyNotes" placeholder="Причина смены или заметка...">
+                    <label data-i18n="label_duty_notes">Примечание</label>
+                    <input type="text" id="dutyNotes" data-i18n-placeholder="ph_duty_notes" placeholder="Причина смены или заметка...">
                 </div>
 
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" onclick="closeDutyModal()">Отмена</button>
-                    <button type="submit" class="btn btn-primary"><i class="fa-solid fa-floppy-disk"></i> Сохранить</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeDutyModal()" data-i18n="btn_cancel">Отмена</button>
+                    <button type="submit" class="btn btn-primary"><i class="fa-solid fa-floppy-disk"></i> <span data-i18n="btn_save_duty">Сохранить</span></button>
                 </div>
             </form>
         </div>
@@ -298,16 +298,16 @@
     <div class="modal-overlay" id="logsModal">
         <div class="modal-card modal-large">
             <div class="modal-header">
-                <h3><i class="fa-solid fa-clock-rotate-left"></i> Журнал действий аудита</h3>
+                <h3><i class="fa-solid fa-clock-rotate-left"></i> <span data-i18n="logs_modal_title">Журнал действий аудита</span></h3>
                 <button type="button" class="modal-close" onclick="closeLogsModal()">&times;</button>
             </div>
             <div class="logs-body">
                 <table class="logs-table">
                     <thead>
                         <tr>
-                            <th>Время</th>
-                            <th>Действие</th>
-                            <th>Подробности</th>
+                            <th data-i18n="col_time_log">Время</th>
+                            <th data-i18n="col_action_log">Действие</th>
+                            <th data-i18n="col_details_log">Подробности</th>
                         </tr>
                     </thead>
                     <tbody id="logsTableBody">
@@ -316,13 +316,13 @@
                 </table>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" onclick="closeLogsModal()">Закрыть</button>
+                <button type="button" class="btn btn-secondary" onclick="closeLogsModal()" data-i18n="btn_close">Закрыть</button>
             </div>
         </div>
     </div>
 
-    <script src="i18n.js?v=20260807_01"></script>
-    <script src="app.js?v=20260807_05"></script>
+    <script src="i18n.js?v=20260807_02"></script>
+    <script src="app.js?v=20260807_06"></script>
 </body>
 
 </html>
