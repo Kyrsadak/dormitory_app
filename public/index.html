@@ -20,7 +20,7 @@
                 <div class="logo-icon"><i class="fa-solid fa-building-user"></i></div>
                 <div>
                     <h1 style="display:flex; align-items:center; gap:8px;">
-                        Система Управления Общежитием
+                        <span data-i18n="app_title">Система Управления Общежитием</span>
                         <span class="admin-badge" id="adminBadge" style="display:none;"><i class="fa-solid fa-crown"></i> Админ</span>
                     </h1>
                     <div class="subtitle">База данных SQLite (PROD) &bull; Дежурства по кухне (7 Этаж)</div>
@@ -29,26 +29,33 @@
 
             <!-- Today's Duty Banner -->
             <div class="today-duty-banner" id="todayDutyBanner" style="cursor:pointer;" onclick="switchView('calendar')">
-                <div class="banner-title"><i class="fa-solid fa-broom"></i> Сегодня дежурит:</div>
+                <div class="banner-title"><i class="fa-solid fa-broom"></i> <span data-i18n="duty_today_card">Сегодня дежурит:</span></div>
                 <div class="banner-items" id="todayDutyItems">
                     <!-- Populated dynamically by app.js -->
                 </div>
             </div>
 
             <div class="header-actions">
+                <!-- Language Switcher -->
+                <div class="lang-switcher">
+                    <button type="button" class="lang-btn active" data-lang="ru" onclick="i18n.setLanguage('ru')">🇷🇺 RU</button>
+                    <button type="button" class="lang-btn" data-lang="en" onclick="i18n.setLanguage('en')">🇬🇧 EN</button>
+                    <button type="button" class="lang-btn" data-lang="uz" onclick="i18n.setLanguage('uz')">🇺🇿 UZ</button>
+                </div>
+
                 <button type="button" class="btn btn-secondary" onclick="switchView('calendar')">
-                    <i class="fa-solid fa-calendar-days"></i> Календарь
+                    <i class="fa-solid fa-calendar-days"></i> <span data-i18n="nav_duty">Календарь</span>
                 </button>
                 
                 <!-- Admin-only buttons -->
-                <button type="button" class="btn btn-primary admin-only-btn" onclick="openAddResidentModal()" style="display:none;">
-                    <i class="fa-solid fa-user-plus"></i> Заселить
+                <button type="button" class="btn btn-primary admin-only-btn" onclick="openAddResidentModal()" style="display:none;" data-i18n="btn_add_short">
+                    + Заселить
                 </button>
-                <button type="button" class="btn btn-secondary admin-only-btn" onclick="openLogsModal()" style="display:none;">
+                <button type="button" class="btn btn-secondary admin-only-btn" onclick="openLogsModal()" style="display:none;" data-i18n="nav_audit">
                     <i class="fa-solid fa-clock-rotate-left"></i> Журнал
                 </button>
                 
-                <button type="button" class="btn btn-outline" onclick="exportToExcel()">
+                <button type="button" class="btn btn-outline" onclick="exportToExcel()" data-i18n="btn_export_excel">
                     <i class="fa-solid fa-file-excel"></i> Excel
                 </button>
 
@@ -57,6 +64,7 @@
                     <i class="fa-solid fa-lock"></i> Вход для админа
                 </button>
             </div>
+
         </header>
 
         <!-- KPI Grid -->
@@ -65,42 +73,42 @@
                 <div class="kpi-icon icon-blue"><i class="fa-solid fa-users"></i></div>
                 <div class="kpi-info">
                     <div class="val" id="kpiTotal">0</div>
-                    <div class="lbl">Всего жильцов</div>
+                    <div class="lbl" data-i18n="stat_total_residents">Всего жильцов</div>
                 </div>
             </div>
             <div class="kpi-card">
                 <div class="kpi-icon icon-pink"><i class="fa-solid fa-venus"></i></div>
                 <div class="kpi-info">
                     <div class="val" id="kpiFloor2">0</div>
-                    <div class="lbl">2 Этаж (Женский)</div>
+                    <div class="lbl" data-i18n="stat_floor2">2 Этаж (Женский)</div>
                 </div>
             </div>
             <div class="kpi-card">
                 <div class="kpi-icon icon-sky"><i class="fa-solid fa-mars"></i></div>
                 <div class="kpi-info">
                     <div class="val" id="kpiFloor7">0</div>
-                    <div class="lbl">7 Этаж (Мужской)</div>
+                    <div class="lbl" data-i18n="stat_floor7">7 Этаж (Мужской)</div>
                 </div>
             </div>
             <div class="kpi-card">
                 <div class="kpi-icon icon-amber"><i class="fa-solid fa-clock"></i></div>
                 <div class="kpi-info">
                     <div class="val" id="kpiTemp">0</div>
-                    <div class="lbl">Временные (14 дней)</div>
+                    <div class="lbl" data-i18n="filter_14_days">Временные (14 дней)</div>
                 </div>
             </div>
             <div class="kpi-card">
                 <div class="kpi-icon icon-red"><i class="fa-solid fa-user-clock"></i></div>
                 <div class="kpi-info">
                     <div class="val" id="kpiWaiting">0</div>
-                    <div class="lbl">В очереди / Без комнаты</div>
+                    <div class="lbl" data-i18n="unassigned_title">В очереди / Без комнаты</div>
                 </div>
             </div>
             <div class="kpi-card">
                 <div class="kpi-icon icon-green"><i class="fa-solid fa-bed"></i></div>
                 <div class="kpi-info">
                     <div class="val" id="kpiFreeBeds">0</div>
-                    <div class="lbl">Свободных койко-мест</div>
+                    <div class="lbl" data-i18n="stat_free_beds">Свободных койко-мест</div>
                 </div>
             </div>
         </div>
@@ -110,20 +118,20 @@
             <!-- View Mode Switcher -->
             <div class="view-mode-tabs">
                 <button type="button" class="tab-btn active" id="viewRoomsBtn" onclick="switchView('rooms')">
-                    <i class="fa-solid fa-border-all"></i> Сетка комнат
+                    <i class="fa-solid fa-border-all"></i> <span data-i18n="nav_dashboard">Сетка комнат</span>
                 </button>
                 <button type="button" class="tab-btn" id="viewCalendarBtn" onclick="switchView('calendar')">
-                    <i class="fa-solid fa-calendar-days"></i> Календарь дежурств
+                    <i class="fa-solid fa-calendar-days"></i> <span data-i18n="nav_duty">Календарь дежурств</span>
                 </button>
             </div>
 
             <!-- Room Filter Tabs (Visible in Rooms View) -->
             <div class="filter-tabs" id="roomFilterTabs">
-                <button type="button" class="tab-btn active" data-filter="all" onclick="setFilter('all', this)">Все комнаты</button>
-                <button type="button" class="tab-btn" data-filter="2" onclick="setFilter('2', this)">2 Этаж (Женский)</button>
-                <button type="button" class="tab-btn" data-filter="7" onclick="setFilter('7', this)">7 Этаж (Мужской)</button>
-                <button type="button" class="tab-btn" data-filter="temp" onclick="setFilter('temp', this)">14 Дней</button>
-                <button type="button" class="tab-btn" data-filter="waiting" onclick="setFilter('waiting', this)">В очереди</button>
+                <button type="button" class="tab-btn active" data-filter="all" onclick="setFilter('all', this)" data-i18n="filter_all_floors">Все комнаты</button>
+                <button type="button" class="tab-btn" data-filter="2" onclick="setFilter('2', this)" data-i18n="filter_floor2">2 Этаж (Женский)</button>
+                <button type="button" class="tab-btn" data-filter="7" onclick="setFilter('7', this)" data-i18n="filter_floor7">7 Этаж (Мужской)</button>
+                <button type="button" class="tab-btn" data-filter="temp" onclick="setFilter('temp', this)" data-i18n="filter_14_days">14 Дней</button>
+                <button type="button" class="tab-btn" data-filter="waiting" onclick="setFilter('waiting', this)" data-i18n="filter_waiting">В очереди</button>
             </div>
 
             <!-- Calendar Controls (Visible in Calendar View) -->
@@ -135,9 +143,10 @@
 
             <div class="search-box" id="searchBoxContainer">
                 <i class="fa-solid fa-magnifying-glass"></i>
-                <input type="text" id="searchInput" placeholder="Поиск по ФИО, нику или комнате..." oninput="renderApp()">
+                <input type="text" id="searchInput" placeholder="Поиск по ФИО, нику или комнате..." data-i18n="search_placeholder" oninput="renderApp()">
             </div>
         </div>
+
 
         <!-- Content Area: Rooms Layout View -->
         <main id="floorsContainer">
@@ -312,6 +321,8 @@
         </div>
     </div>
 
+    <script src="i18n.js?v=20260807_01"></script>
     <script src="app.js?v=20260807_05"></script>
 </body>
+
 </html>

@@ -18,6 +18,15 @@ document.addEventListener('DOMContentLoaded', () => {
     fetchFloorsData();
     fetchTodayDuty();
 
+    window.onLanguageChange = function() {
+        updateAdminUI();
+        if (window.i18n) window.i18n.applyTranslations();
+        if (currentView === 'rooms') renderApp();
+        if (currentView === 'calendar') fetchDutyCalendar();
+        fetchTodayDuty();
+    };
+
+
     // Attach click listeners to view mode buttons explicitly
     const btnRooms = document.getElementById('viewRoomsBtn');
     const btnCal = document.getElementById('viewCalendarBtn');
@@ -306,12 +315,17 @@ function changeCalendarMonth(delta) {
 function renderDutyCalendar() {
     if (!globalDutyCalendarData) return;
 
-    const monthNames = [
-        "Январь", "Февраль", "Март", "Апрель", "Май", "Июнь",
-        "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"
-    ];
+    const monthNamesMap = {
+        ru: ["Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"],
+        en: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"],
+        uz: ["Yanvar", "Fevral", "Mart", "Aprel", "May", "Iyun", "Iyul", "Avgust", "Sentabr", "Oktabr", "Noyabr", "Dekabr"]
+    };
+    const lang = (window.i18n ? window.i18n.getLanguage() : "ru");
+    const monthNames = monthNamesMap[lang] || monthNamesMap.ru;
+
     const titleEl = document.getElementById('calendarMonthTitle');
     if (titleEl) titleEl.innerText = `${monthNames[calMonth - 1]} ${calYear}`;
+
 
     const grid = document.getElementById('calendarDaysGrid');
     if (!grid) return;

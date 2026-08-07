@@ -98,6 +98,44 @@ h1 {
 .subtitle {
     font-size: 13px;
     color: var(--text-muted);
+}
+
+/* Language Switcher */
+.lang-switcher {
+    display: flex;
+    align-items: center;
+    background: var(--bg-input);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    padding: 3px;
+    gap: 3px;
+}
+
+.lang-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    font-size: 12px;
+    font-weight: 600;
+    padding: 5px 9px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.lang-btn:hover {
+    color: var(--text-main);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.lang-btn.active {
+    background: var(--primary);
+    color: #ffffff;
+    box-shadow: 0 2px 8px var(--primary-glow);
+}
     margin-top: 2px;
 }
 

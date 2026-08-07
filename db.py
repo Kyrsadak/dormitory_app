@@ -64,6 +64,14 @@ def init_db():
     );
     """)
 
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS bot_user_settings (
+        telegram_id INTEGER PRIMARY KEY,
+        language TEXT NOT NULL DEFAULT 'ru'
+    );
+    """)
+
+
     # Populate default rooms if empty
     cursor.execute("SELECT COUNT(*) as count FROM rooms")
     if cursor.fetchone()["count"] == 0:
@@ -433,7 +441,34 @@ def get_today_duty():
     today_item = next((item for item in day_items if item["date"] == today_str), None)
     return {7: today_item}
 
+def get_user_language(telegram_id):
+    if not telegram_id:
+        return 'ru'
+    conn = get_db_connection()
+    c = conn.cursor()
+    c.execute("SELECT language FROM bot_user_settings WHERE telegram_id = ?", (telegram_id,))
+    row = c.fetchone()
+    conn.close()
+    if row and row["language"]:
+        return row["language"]
+    return 'ru'
+
+def set_user_language(telegram_id, language):
+    if not telegram_id or language not in ('ru', 'en', 'uz'):
+        return False
+    conn = get_db_connection()
+    c = conn.cursor()
+    c.execute("""
+    INSERT INTO bot_user_settings (telegram_id, language)
+    VALUES (?, ?)
+    ON CONFLICT(telegram_id) DO UPDATE SET language = excluded.language
+    """, (telegram_id, language))
+    conn.commit()
+    conn.close()
+    return True
+
 if __name__ == "__main__":
     init_db()
     clear_old_duty_test_data()
     print("Database initialized & duty schedule cleared!")
+

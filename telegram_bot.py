@@ -11,6 +11,7 @@ import os
 sys.path.append(os.path.dirname(__file__))
 import db
 import excel_sync
+import bot_locales
 
 # Telegram Bot Token
 BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "8558094760:AAFOanWcpS0PR5uhWU9k2ed-XQpIWWt2Fhg")
@@ -92,9 +93,9 @@ def answer_callback_query(callback_query_id, text="", show_alert=False):
     }
     return telegram_api("answerCallbackQuery", payload)
 
-def format_duty_message(duty_item):
+def format_duty_message(duty_item, chat_type='private', user_id=None):
     if not duty_item:
-        return "⚠️ Данные о дежурстве не найдены."
+        return bot_locales.t(chat_type, user_id, "duty_not_found")
 
     date_str = duty_item["date"]
     room_num = duty_item["room_number"]
@@ -103,20 +104,20 @@ def format_duty_message(duty_item):
 
     res_names = "\n".join([f"  • <b>{r['full_name']}</b> (@{r['nickname']})" if r.get('nickname') else f"  • <b>{r['full_name']}</b>" for r in residents])
     if not res_names:
-        res_names = "  • <i>В комнате никто не живет</i>"
+        res_names = bot_locales.t(chat_type, user_id, "duty_no_residents")
 
-    status_icon = "✅ <b>ВЫПОЛНЕНО</b>" if status == "completed" else "⏳ <b>ОЖИДАЕТ ВЫПОЛНЕНИЯ</b>"
+    status_icon = bot_locales.t(chat_type, user_id, "duty_status_completed") if status == "completed" else bot_locales.t(chat_type, user_id, "duty_status_pending")
 
-    msg = f"🧹 <b>ГРАФИК ДЕЖУРСТВА ПО КУХНЕ (7 ЭТАЖ)</b>\n"
-    msg += f"📅 <b>Дата:</b> {date_str}\n"
-    msg += f"📍 <b>Статус:</b> {status_icon}\n\n"
-    msg += f"🔷 <b>СЕГОДНЯ ДЕЖУРИТ КОМНАТА {room_num}:</b>\n"
+    msg = f"{bot_locales.t(chat_type, user_id, 'duty_title')}\n"
+    msg += f"{bot_locales.t(chat_type, user_id, 'duty_date', date_str=date_str)}\n"
+    msg += f"{bot_locales.t(chat_type, user_id, 'duty_status', status_icon=status_icon)}\n\n"
+    msg += f"{bot_locales.t(chat_type, user_id, 'duty_today_room', room_num=room_num)}\n"
     msg += f"{res_names}\n\n"
-    msg += f"📌 <b>Обязанность:</b> Навести порядок на кухне 7 этажа и вынести мусор в бак."
+    msg += f"{bot_locales.t(chat_type, user_id, 'duty_task')}"
 
     return msg
 
-def get_duty_keyboard(duty_item):
+def get_duty_keyboard(duty_item, chat_type='private', user_id=None):
     if not duty_item or duty_item["status"] == "completed":
         return None
 
@@ -125,7 +126,7 @@ def get_duty_keyboard(duty_item):
         "inline_keyboard": [
             [
                 {
-                    "text": "✅ Мы выполнили дежурство!",
+                    "text": bot_locales.t(chat_type, user_id, "duty_btn_done"),
                     "callback_data": f"done:{duty_date}:7"
                 }
             ]
@@ -133,44 +134,58 @@ def get_duty_keyboard(duty_item):
     }
     return keyboard
 
-def get_admin_keyboard():
+def get_admin_keyboard(chat_type='private', user_id=None):
     keyboard = {
         "inline_keyboard": [
             [
-                {"text": "📊 Статистика", "callback_data": "adm:stats_view"},
-                {"text": "👥 Список жильцов", "callback_data": "adm:list_view"}
+                {"text": bot_locales.t(chat_type, user_id, "btn_stats"), "callback_data": "adm:stats_view"},
+                {"text": bot_locales.t(chat_type, user_id, "btn_residents"), "callback_data": "adm:list_view"}
             ],
             [
-                {"text": "🧹 Сменить дежурного", "callback_data": "adm:duty_rooms"},
-                {"text": "📑 Журнал аудита", "callback_data": "adm:logs_view"}
+                {"text": bot_locales.t(chat_type, user_id, "btn_change_duty"), "callback_data": "adm:duty_rooms"},
+                {"text": bot_locales.t(chat_type, user_id, "btn_logs"), "callback_data": "adm:logs_view"}
             ],
             [
-                {"text": "🔑 Список Админов", "callback_data": "adm:admins_view"},
-                {"text": "🔄 Обновить панель", "callback_data": "adm:menu"}
+                {"text": bot_locales.t(chat_type, user_id, "btn_admins"), "callback_data": "adm:admins_view"},
+                {"text": bot_locales.t(chat_type, user_id, "btn_language"), "callback_data": "adm:lang_select"}
+            ],
+            [
+                {"text": bot_locales.t(chat_type, user_id, "btn_refresh"), "callback_data": "adm:menu"}
             ]
         ]
     }
     return keyboard
 
-def get_back_to_menu_keyboard():
+def get_back_to_menu_keyboard(chat_type='private', user_id=None):
     return {
         "inline_keyboard": [
             [
-                {"text": "⬅️ Вернуться в Главное Меню", "callback_data": "adm:menu"}
+                {"text": bot_locales.t(chat_type, user_id, "btn_back"), "callback_data": "adm:menu"}
             ]
         ]
     }
 
-def send_today_duty_notification(chat_id):
+def get_language_keyboard():
+    return {
+        "inline_keyboard": [
+            [
+                {"text": "🇷🇺 Русский", "callback_data": "lang:ru"},
+                {"text": "🇬🇧 English", "callback_data": "lang:en"},
+                {"text": "🇺🇿 O'zbekcha", "callback_data": "lang:uz"}
+            ]
+        ]
+    }
+
+def send_today_duty_notification(chat_id, chat_type='private', user_id=None):
     today_duty = db.get_today_duty()
     item = today_duty.get(7)
 
     if not item:
-        send_message(chat_id, "⚠️ На сегодня нет назначенных дежурных комнат.")
+        send_message(chat_id, bot_locales.t(chat_type, user_id, "duty_no_schedule_today"))
         return
 
-    text = format_duty_message(item)
-    keyboard = get_duty_keyboard(item)
+    text = format_duty_message(item, chat_type=chat_type, user_id=user_id)
+    keyboard = get_duty_keyboard(item, chat_type=chat_type, user_id=user_id)
     send_message(chat_id, text, reply_markup=keyboard)
 
 def render_admin_menu_text():
@@ -187,7 +202,9 @@ def render_admin_menu_text():
         "• <code>/deladmin TelegramID</code> — Удалить админа"
     )
 
+
 def handle_command(message):
+    chat_type = message.get("chat", {}).get("type", "private")
     chat_id = message["chat"]["id"]
     user_id = message.get("from", {}).get("id")
     text = message.get("text", "").strip()
@@ -196,33 +213,34 @@ def handle_command(message):
         config["chat_id"] = chat_id
         save_config(config)
 
-        admin_text = "\n\n👑 <b>Вам доступна Панель Администратора!</b> Отправьте /admin для входа." if is_admin(user_id) else ""
+        admin_text = bot_locales.t(chat_type, user_id, "admin_privilege") if is_admin(user_id) else ""
+        welcome_msg = bot_locales.t(chat_type, user_id, "welcome", admin_text=admin_text)
 
-        welcome_msg = (
-            "👋 <b>Привет! Я официальный бот Общежития.</b>\n\n"
-            "📌 <b>Доступные команды:</b>\n"
-            "• /duty или /today — Кто сегодня дежурит и отметка о выполнении\n"
-            "• /setgroup — Привязать этот чат для утренних напоминаний в 09:00\n"
-            f"{admin_text}\n\n"
-            "<i>Все данные мгновенно синхронизируются с веб-сайтом!</i>"
-        )
-        send_message(chat_id, welcome_msg)
+        reply_markup = get_language_keyboard() if chat_type == 'private' else None
+        send_message(chat_id, welcome_msg, reply_markup=reply_markup)
+
+    elif text in ["/language", "/lang", "/til"]:
+        if chat_type != 'private':
+            send_message(chat_id, "ℹ️ В групповых чатах язык всегда русский.")
+            return
+        send_message(chat_id, bot_locales.t(chat_type, user_id, "select_language"), reply_markup=get_language_keyboard())
 
     elif text in ["/duty", "/today", "/dezhurstvo"]:
-        send_today_duty_notification(chat_id)
+        send_today_duty_notification(chat_id, chat_type=chat_type, user_id=user_id)
 
     elif text == "/setgroup":
         config["chat_id"] = chat_id
         save_config(config)
-        send_message(chat_id, "✅ <b>Группа успешно привязана!</b> Каждый день в 09:00 сюда будет приходить график дежурств.")
+        send_message(chat_id, bot_locales.t(chat_type, user_id, "group_linked"))
 
     # --- ADMIN COMMANDS ---
     elif text in ["/admin", "/menu"]:
         if not is_admin(user_id):
-            send_message(chat_id, "⛔ У вас нет доступа к административной панели общежития.")
+            send_message(chat_id, bot_locales.t(chat_type, user_id, "no_admin_perm"))
             return
 
-        send_message(chat_id, render_admin_menu_text(), reply_markup=get_admin_keyboard())
+        send_message(chat_id, render_admin_menu_text(), reply_markup=get_admin_keyboard(chat_type, user_id))
+
 
     elif text == "/stats":
         if not is_admin(user_id):
@@ -384,17 +402,35 @@ def handle_command(message):
 
 def handle_callback_query(cb):
     cb_id = cb["id"]
+    chat_type = cb.get("message", {}).get("chat", {}).get("type", "private")
     chat_id = cb["message"]["chat"]["id"]
     msg_id = cb["message"]["message_id"]
     user_id = cb.get("from", {}).get("id")
     data = cb.get("data", "")
 
-    if data.startswith("done:"):
+    if data.startswith("lang:"):
+        new_lang = data.split(":")[1]
+        if chat_type != 'private':
+            answer_callback_query(cb_id, "ℹ️ В группах язык всегда русский.", show_alert=True)
+            return
+        db.set_user_language(user_id, new_lang)
+        confirm_text = bot_locales.t(chat_type, user_id, "lang_changed")
+        answer_callback_query(cb_id, confirm_text, show_alert=False)
+        send_message(chat_id, confirm_text)
+
+    elif data == "adm:lang_select":
+        answer_callback_query(cb_id)
+        if chat_type != 'private':
+            send_message(chat_id, "ℹ️ В групповых чатах язык всегда русский.")
+            return
+        send_message(chat_id, bot_locales.t(chat_type, user_id, "select_language"), reply_markup=get_language_keyboard())
+
+    elif data.startswith("done:"):
         parts = data.split(":")
         duty_date = parts[1]
         floor = int(parts[2])
 
-        answer_callback_query(cb_id, "✅ Дежурство отмечено выполненным!", show_alert=False)
+        answer_callback_query(cb_id, bot_locales.t(chat_type, user_id, "duty_marked_done"), show_alert=False)
 
         db.mark_duty_status(duty_date, floor, "completed", notes="Отмечено в Telegram")
         excel_sync.export_db_to_excel(db.DB_PATH, EXCEL_PATH)
@@ -403,7 +439,7 @@ def handle_callback_query(cb):
         today_duty = db.get_today_duty()
         item = today_duty.get(7)
 
-        updated_text = format_duty_message(item) + f"\n\n🎉 <b>ОТМЕЧЕНО ВЫПОЛНЕННЫМ:</b> {user_name} в Telegram!\n<i>Статус мгновенно синхронизирован с веб-сайтом!</i>"
+        updated_text = format_duty_message(item, chat_type=chat_type, user_id=user_id) + f"\n\n🎉 <b>ОТМЕЧЕНО ВЫПОЛНЕННЫМ:</b> {user_name} в Telegram!\n<i>Статус мгновенно синхронизирован с веб-сайтом!</i>"
         edit_message(chat_id, msg_id, updated_text, reply_markup=None)
 
     elif data == "adm:menu":
@@ -411,7 +447,8 @@ def handle_callback_query(cb):
             answer_callback_query(cb_id, "⛔ Нет доступа", show_alert=True)
             return
         answer_callback_query(cb_id)
-        edit_message(chat_id, msg_id, render_admin_menu_text(), reply_markup=get_admin_keyboard())
+        edit_message(chat_id, msg_id, render_admin_menu_text(), reply_markup=get_admin_keyboard(chat_type, user_id))
+
 
     elif data == "adm:stats_view":
         if not is_admin(user_id):
