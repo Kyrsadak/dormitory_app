@@ -21,6 +21,7 @@ MAIN_OWNER_ID = 7990114364
 
 CONFIG_FILE = os.path.join(os.path.dirname(__file__), "bot_config.json")
 EXCEL_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "Лист Microsoft Excel.xlsx"))
+RULES_PDF_PATH = os.path.join(os.path.dirname(__file__), "Правила_проживания_в_общежитии_2.pdf")
 
 def load_config():
     if os.path.exists(CONFIG_FILE):
@@ -73,6 +74,61 @@ def send_message(chat_id, text, reply_markup=None):
     if reply_markup:
         payload["reply_markup"] = reply_markup
     return telegram_api("sendMessage", payload)
+
+def send_document(chat_id, file_path, caption=None):
+    if not BOT_TOKEN:
+        print("[Telegram Bot] Error: BOT_TOKEN is empty.")
+        return None
+    if not os.path.exists(file_path):
+        print(f"[Telegram Bot] Error: File not found at {file_path}")
+        return None
+
+    url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendDocument"
+    boundary = "----WebKitFormBoundary7MA4YWxkTrZu0gW"
+    filename = os.path.basename(file_path)
+
+    try:
+        with open(file_path, "rb") as f:
+            file_bytes = f.read()
+
+        body = []
+        body.append(f"--{boundary}".encode())
+        body.append(b'Content-Disposition: form-data; name="chat_id"')
+        body.append(b"")
+        body.append(str(chat_id).encode())
+
+        if caption:
+            body.append(f"--{boundary}".encode())
+            body.append(b'Content-Disposition: form-data; name="caption"')
+            body.append(b'Content-Type: text/plain; charset=utf-8')
+            body.append(b"")
+            body.append(caption.encode())
+
+            body.append(f"--{boundary}".encode())
+            body.append(b'Content-Disposition: form-data; name="parse_mode"')
+            body.append(b"")
+            body.append(b"HTML")
+
+        body.append(f"--{boundary}".encode())
+        body.append(f'Content-Disposition: form-data; name="document"; filename="{filename}"'.encode())
+        body.append(b"Content-Type: application/pdf")
+        body.append(b"")
+        body.append(file_bytes)
+
+        body.append(f"--{boundary}--".encode())
+        body.append(b"")
+
+        payload = b"\r\n".join(body)
+
+        req = urllib.request.Request(url, data=payload, headers={
+            "Content-Type": f"multipart/form-data; boundary={boundary}"
+        })
+        with urllib.request.urlopen(req, timeout=60) as response:
+            res_data = json.loads(response.read().decode("utf-8"))
+            return res_data
+    except Exception as e:
+        print(f"[Telegram Bot API sendDocument Error]: {e}")
+        return None
 
 def edit_message(chat_id, message_id, text, reply_markup=None):
     payload = {
@@ -326,7 +382,7 @@ def handle_command(message):
     user_id = message.get("from", {}).get("id")
     text = message.get("text", "").strip()
 
-    if text in ["/start", "/help"]:
+    if text.startswith("/start") or text == "/help":
         config["chat_id"] = chat_id
         save_config(config)
         # Cancel any pending apply flow
@@ -337,6 +393,19 @@ def handle_command(message):
 
         reply_markup = get_language_keyboard() if chat_type == 'private' else None
         send_message(chat_id, welcome_msg, reply_markup=reply_markup)
+
+        # If user came via deep link /start apply, show application conditions immediately
+        if "apply" in text.lower():
+            if chat_type == 'private':
+                _apply_states[user_id] = {'step': 1}
+                cancel_btn = bot_locales.t(chat_type, user_id, 'apply_cancel_btn')
+                apply_btn  = bot_locales.t(chat_type, user_id, 'apply_conditions_btn')
+                keyboard = {"inline_keyboard": [[
+                    {"text": apply_btn, "callback_data": "apply:start"},
+                    {"text": cancel_btn, "callback_data": "apply:cancel"}
+                ]]}
+                send_message(chat_id, bot_locales.t(chat_type, user_id, 'apply_conditions'), reply_markup=keyboard)
+                _apply_states.pop(user_id, None)
 
     elif text in ["/language", "/lang", "/til"]:
         if chat_type != 'private':
@@ -610,9 +679,15 @@ def _finalize_application_decision(chat_id, msg_id, user_id, chat_type, app_id, 
             send_message(chat_id, bot_locales.t(chat_type, user_id, 'app_added_to_waiting', name=app['full_name']))
             # Notify applicant
             notify_text = bot_locales.t('private', applicant_tg_id, 'app_approved_notify', comment=comment_display)
+            send_message(applicant_tg_id, notify_text)
+
+            # Send Rules PDF Document to the applicant upon approval
+            if os.path.exists(RULES_PDF_PATH):
+                rules_caption = bot_locales.t('private', applicant_tg_id, 'app_rules_sent')
+                send_document(applicant_tg_id, RULES_PDF_PATH, caption=rules_caption)
         else:
             notify_text = bot_locales.t('private', applicant_tg_id, 'app_rejected_notify', comment=comment_display)
-        send_message(applicant_tg_id, notify_text)
+            send_message(applicant_tg_id, notify_text)
 
 def handle_callback_query(cb):
     cb_id = cb["id"]

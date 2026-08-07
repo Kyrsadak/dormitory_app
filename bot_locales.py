@@ -7,14 +7,26 @@ LOCALES = {
 
         # /start, /help
         'welcome': (
-            "👋 <b>Привет! Я официальный бот Общежития.</b>\n\n"
-            "📌 <b>Доступные команды:</b>\n"
-            "• /duty или /today — Кто сегодня дежурит и отметка о выполнении\n"
-            "• /language — Сменить язык / Change language / Tilni o'zgartirish\n"
-            "• /setgroup — Привязать этот чат для утренних напоминаний в 09:00\n"
+            "🏢 <b>Добро пожаловать в официальный бот Общежития School 21!</b>\n\n"
+            "📍 Ул. Каландар, 24 (10 мин. от кампуса)\n\n"
+            "📌 <b>Что делает этот бот:</b>\n"
+            "• 🧹 Отображает график дежурств по кухне (7 этаж)\n"
+            "• 📊 Показывает актуальную статистику проживающих\n"
+            "• 📝 Принимает заявки на проживание в общежитии (2026)\n\n"
+            "📌 <b>Основные команды:</b>\n"
+            "• /apply — 📝 Подать заявку на проживание в общежитии\n"
+            "• /duty — Кто сегодня дежурит (7 этаж)\n"
+            "• /language — Сменить язык интерфейса\n"
+            "• /setgroup — Привязать групповой чат для уведомлений\n"
             "{admin_text}\n\n"
+            "🌐 Веб-сайт: school21dorm.onrender.com\n"
             "<i>Все данные мгновенно синхронизируются с веб-сайтом!</i>"
         ),
+        'welcome_apply': (
+            "📝 <b>Заявка на проживание — School 21 2026</b>\n\n"
+            "Отправьте /apply чтобы начать заполнение заявки."
+        ),
+        'app_rules_sent': "📎 Выше прикреплены <b>Правила проживания в общежитии</b>. Пожалуйста, ознакомьтесь!",
         'admin_privilege': "\n\n👑 <b>Вам доступна Панель Администратора!</b> Отправьте /admin для входа.",
 
         # language
@@ -208,15 +220,27 @@ LOCALES = {
         'lang_name': '🇬🇧 English',
 
         'welcome': (
-            "👋 <b>Hello! I am the official Dormitory Bot.</b>\n\n"
-            "📌 <b>Available commands:</b>\n"
-            "• /duty or /today — Today's duty schedule & completion check\n"
-            "• /language — Change language / Сменить язык / Tilni o'zgartirish\n"
-            "• /setgroup — Link this group chat for 09:00 morning notifications\n"
+            "🏢 <b>Welcome to the Official School 21 Dormitory Bot!</b>\n\n"
+            "📍 Address: Qalandar St., 24 (10 min from campus)\n\n"
+            "📌 <b>What this bot does:</b>\n"
+            "• 🧹 Kitchen duty schedule (7th floor)\n"
+            "• 📊 Live resident statistics\n"
+            "• 📝 Housing applications for dormitory (2026)\n\n"
+            "📌 <b>Main commands:</b>\n"
+            "• /apply — 📝 Apply for residence in the dormitory\n"
+            "• /duty — Today's duty room (7th floor)\n"
+            "• /language — Change bot language\n"
+            "• /setgroup — Link group chat for morning reminders\n"
             "{admin_text}\n\n"
+            "🌐 Website: school21dorm.onrender.com\n"
             "<i>All data is instantly synced with the website!</i>"
         ),
-        'admin_privilege': "\n\n👑 <b>Admin Panel is available to you!</b> Send /admin to enter.",
+        'welcome_apply': (
+            "📝 <b>Housing Application — School 21 2026</b>\n\n"
+            "Send /apply to start filling in your application."
+        ),
+        'app_rules_sent': "📎 The <b>Dormitory Rules</b> are attached above. Please read them carefully!",
+        'admin_privilege': "\n\n👑 <b>Admin Panel is available to you!</b> Send /admin to access it.",
 
         'select_language': "🌐 <b>Select language / Выберите язык / Tilni tanlang:</b>",
         'lang_changed': "✅ <b>Language successfully changed to English!</b>",
@@ -391,14 +415,26 @@ LOCALES = {
         'lang_name': "🇺🇿 O'zbekcha",
 
         'welcome': (
-            "👋 <b>Salom! Men Yotoqxona rasmiy botiman.</b>\n\n"
-            "📌 <b>Mavjud buyruqlar:</b>\n"
-            "• /duty yoki /today — Bugungi navbatchilik va bajarilganlik belgisi\n"
-            "• /language — Tilni o'zgartirish / Сменить язык / Change language\n"
-            "• /setgroup — Ertalabki 09:00 bildirishnomalari uchun guruhni ulash\n"
+            "🏢 <b>School 21 Yotoqxonasi rasmiy botiga xush kelibsiz!</b>\n\n"
+            "📍 Manzil: Qalandar ko'chasi, 24 (kampusdan 10 daqiqa)\n\n"
+            "📌 <b>Bot imkoniyatlari:</b>\n"
+            "• 🧹 Oshxona navbatchilik jadvali (7-qavat)\n"
+            "• 📊 Yashovchilar statistikasi\n"
+            "• 📝 Yotoqxonada yashash uchun arizalar topshirish (2026)\n\n"
+            "📌 <b>Asosiy buyruqlar:</b>\n"
+            "• /apply — 📝 Yotoqxonaga ariza topshirish\n"
+            "• /duty — Bugungi navbatchilik jadvali (7-qavat)\n"
+            "• /language — Tilni o'zgartirish\n"
+            "• /setgroup — Guruh chatini ulash\n"
             "{admin_text}\n\n"
+            "🌐 Veb-sayt: school21dorm.onrender.com\n"
             "<i>Barcha ma'lumotlar veb-sayt bilan zumda sinxronlanadi!</i>"
         ),
+        'welcome_apply': (
+            "📝 <b>Yashash uchun ariza — School 21 2026</b>\n\n"
+            "Arizani to'ldirishni boshlash uchun /apply yuboring."
+        ),
+        'app_rules_sent': "📎 Yuqorida <b>Yotoqxonada yashash qoidalari</b> biriktirilgan. Iltimos, танишиб чиқинг!",
         'admin_privilege': "\n\n👑 <b>Siz uchun Admin Paneli mavjud!</b> Kirish uchun /admin yuboring.",
 
         'select_language': "🌐 <b>Tilni tanlang / Select language / Выберите язык:</b>",
