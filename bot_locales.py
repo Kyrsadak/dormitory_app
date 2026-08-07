@@ -19,7 +19,7 @@ LOCALES = {
             "• /language — Сменить язык интерфейса\n"
             "• /setgroup — Привязать групповой чат для уведомлений\n"
             "{admin_text}\n\n"
-            "🌐 Веб-сайт: school21dorm.onrender.com\n"
+            "🌐 Веб-сайт: https://dormitory-app-jpuv.onrender.com/\n"
             "<i>Все данные мгновенно синхронизируются с веб-сайтом!</i>"
         ),
         'welcome_apply': (
@@ -232,7 +232,7 @@ LOCALES = {
             "• /language — Change bot language\n"
             "• /setgroup — Link group chat for morning reminders\n"
             "{admin_text}\n\n"
-            "🌐 Website: school21dorm.onrender.com\n"
+            "🌐 Website: https://dormitory-app-jpuv.onrender.com/\n"
             "<i>All data is instantly synced with the website!</i>"
         ),
         'welcome_apply': (
@@ -427,7 +427,7 @@ LOCALES = {
             "• /language — Tilni o'zgartirish\n"
             "• /setgroup — Guruh chatini ulash\n"
             "{admin_text}\n\n"
-            "🌐 Veb-sayt: school21dorm.onrender.com\n"
+            "🌐 Veb-sayt: https://dormitory-app-jpuv.onrender.com/\n"
             "<i>Barcha ma'lumotlar veb-sayt bilan zumda sinxronlanadi!</i>"
         ),
         'welcome_apply': (
