@@ -70,6 +70,11 @@ class DormitoryHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                 self._send_json(stats)
                 return
 
+            elif path == "/api/db-status":
+                status_info = db.get_db_status()
+                self._send_json(status_info)
+                return
+
             elif path == "/api/floors":
                 data = db.get_floors_data()
                 self._send_json(data)

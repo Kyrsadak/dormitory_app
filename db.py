@@ -118,25 +118,63 @@ class UnifiedConnection:
         self.conn.close()
 
 
+LAST_DB_ERROR = None
+
 def get_db_connection():
+    global LAST_DB_ERROR
     if DATABASE_URL:
+        # 1. Try psycopg2 standard
         try:
             import psycopg2
             pg_conn = psycopg2.connect(DATABASE_URL)
+            LAST_DB_ERROR = None
             return UnifiedConnection(pg_conn, is_postgres=True)
         except Exception as e:
-            print(f"[DB Warning] Could not connect to PostgreSQL directly ({e}). Trying sslmode='require'...")
+            err_msg = str(e)
+            print(f"[DB Warning] Direct psycopg2 connect failed ({err_msg}). Trying sslmode='require'...")
             try:
                 import psycopg2
                 pg_conn = psycopg2.connect(DATABASE_URL, sslmode='require')
+                LAST_DB_ERROR = None
                 return UnifiedConnection(pg_conn, is_postgres=True)
             except Exception as e2:
-                print(f"[DB Error] Could not connect to PostgreSQL: {e2}. Falling back to SQLite.")
+                err_msg2 = str(e2)
+                print(f"[DB Warning] psycopg2 connect failed ({err_msg2}). Trying pg8000...")
+
+        # 2. Try pg8000 pure-python driver
+        try:
+            import pg8000.native
+            import urllib.parse
+            url_parsed = urllib.parse.urlparse(DATABASE_URL)
+            pg_conn = pg8000.native.Connection(
+                user=url_parsed.username,
+                password=url_parsed.password,
+                host=url_parsed.hostname,
+                port=url_parsed.port or 5432,
+                database=url_parsed.path.lstrip('/'),
+                ssl_context=True
+            )
+            LAST_DB_ERROR = None
+            return UnifiedConnection(pg_conn, is_postgres=True)
+        except Exception as e3:
+            LAST_DB_ERROR = f"psycopg2: {err_msg2 if 'err_msg2' in locals() else err_msg} | pg8000: {e3}"
+            print(f"[DB CRITICAL ERROR] Failed to connect to PostgreSQL ({LAST_DB_ERROR}). Falling back to SQLite.")
 
     os.makedirs(DB_DIR, exist_ok=True)
     sqlite_conn = sqlite3.connect(DB_PATH)
     sqlite_conn.row_factory = sqlite3.Row
     return UnifiedConnection(sqlite_conn, is_postgres=False)
+
+def get_db_status():
+    conn = get_db_connection()
+    is_pg = conn.is_postgres
+    conn.close()
+    return {
+        "database_url_configured": bool(DATABASE_URL),
+        "is_postgres": is_pg,
+        "active_engine": "PostgreSQL" if is_pg else "SQLite (Local/Fallback)",
+        "last_error": LAST_DB_ERROR
+    }
 
 def init_db():
     conn = get_db_connection()
