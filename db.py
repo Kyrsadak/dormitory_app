@@ -499,7 +499,7 @@ def get_active_male_rooms(conn):
     JOIN residents r ON r.room_number = rm.room_number
     WHERE rm.floor = 7 AND r.status != 'evicted'
     GROUP BY rm.room_number
-    HAVING res_count > 0
+    HAVING COUNT(r.id) > 0
     ORDER BY rm.room_number ASC
     """)
     rooms = [r["room_number"] for r in c.fetchall()]
