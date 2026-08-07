@@ -188,19 +188,8 @@ def send_today_duty_notification(chat_id, chat_type='private', user_id=None):
     keyboard = get_duty_keyboard(item, chat_type=chat_type, user_id=user_id)
     send_message(chat_id, text, reply_markup=keyboard)
 
-def render_admin_menu_text():
-    return (
-        "👑 <b>ПАНЕЛЬ АДМИНИСТРАТОРА ОБЩЕЖИТИЯ</b>\n\n"
-        "Вы вошли как Администратор приложения.\n"
-        "Выберите интересующий раздел с помощью инлайн-кнопок ниже:\n\n"
-        "📌 <b>Доступные быстрые команды:</b>\n"
-        "• <code>/add ФИО | Ник | M/F | Комната</code> — Заселить жильца\n"
-        "• <code>/evict ID</code> — Выселить жильца\n"
-        "• <code>/move ID НоваяКомната</code> — Переселить жильца\n"
-        "• <code>/setduty YYYY-MM-DD Комната</code> — Сменить дежурного\n"
-        "• <code>/addadmin TelegramID</code> — Добавить нового админа\n"
-        "• <code>/deladmin TelegramID</code> — Удалить админа"
-    )
+def render_admin_menu_text(chat_type='private', user_id=None):
+    return bot_locales.t(chat_type, user_id, 'admin_menu')
 
 
 def handle_command(message):
@@ -239,57 +228,58 @@ def handle_command(message):
             send_message(chat_id, bot_locales.t(chat_type, user_id, "no_admin_perm"))
             return
 
-        send_message(chat_id, render_admin_menu_text(), reply_markup=get_admin_keyboard(chat_type, user_id))
+        send_message(chat_id, render_admin_menu_text(chat_type, user_id), reply_markup=get_admin_keyboard(chat_type, user_id))
 
 
     elif text == "/stats":
         if not is_admin(user_id):
-            send_message(chat_id, "⛔ У вас нет доступа к административной панели общежития.")
+            send_message(chat_id, bot_locales.t(chat_type, user_id, "no_admin_perm"))
             return
 
         stats = db.get_stats()
         msg = (
-            "📊 <b>АКТУАЛЬНАЯ СТАТИСТИКА ОБЩЕЖИТИЯ (PROD)</b>\n\n"
-            f"👥 Всего жильцов: <b>{stats['total_residents']}</b> чел.\n"
-            f"🌸 2 Этаж (Женский): <b>{stats['floor2_count']}</b> чел.\n"
-            f"🔷 7 Этаж (Мужской): <b>{stats['floor7_count']}</b> чел.\n"
-            f"⏳ Временные (14 дней): <b>{stats['temp_count']}</b> чел.\n"
-            f"🛑 В очереди / Без комнаты: <b>{stats['waiting_count']}</b> чел.\n"
-            f"🛏️ Свободных койко-мест: <b>{stats['free_beds']}</b> из {stats['total_capacity']}"
+            bot_locales.t(chat_type, user_id, 'stats_title')
+            + bot_locales.t(chat_type, user_id, 'stats_total', total=stats['total_residents'])
+            + bot_locales.t(chat_type, user_id, 'stats_floor2', count=stats['floor2_count'])
+            + bot_locales.t(chat_type, user_id, 'stats_floor7', count=stats['floor7_count'])
+            + bot_locales.t(chat_type, user_id, 'stats_temp', count=stats['temp_count'])
+            + bot_locales.t(chat_type, user_id, 'stats_waiting', count=stats['waiting_count'])
+            + bot_locales.t(chat_type, user_id, 'stats_free_beds', free=stats['free_beds'], total_cap=stats['total_capacity'])
+            + bot_locales.t(chat_type, user_id, 'stats_footer')
         )
-        send_message(chat_id, msg, reply_markup=get_back_to_menu_keyboard())
+        send_message(chat_id, msg, reply_markup=get_back_to_menu_keyboard(chat_type, user_id))
 
     elif text == "/logs":
         if not is_admin(user_id):
-            send_message(chat_id, "⛔ У вас нет доступа к административной панели общежития.")
+            send_message(chat_id, bot_locales.t(chat_type, user_id, "no_admin_perm"))
             return
 
         logs = db.get_activity_logs(10)
         log_lines = "\n".join([f"• <i>{l['timestamp']}</i> — <b>{l['action']}</b>: {l['details']}" for l in logs])
-        send_message(chat_id, f"📑 <b>ЖУРНАЛ ПОСЛЕДНИХ ДЕЙСТВИЙ (АУДИТ):</b>\n\n{log_lines}", reply_markup=get_back_to_menu_keyboard())
+        send_message(chat_id, bot_locales.t(chat_type, user_id, 'logs_title') + log_lines, reply_markup=get_back_to_menu_keyboard(chat_type, user_id))
 
     elif text == "/list":
         if not is_admin(user_id):
-            send_message(chat_id, "⛔ У вас нет доступа к административной панели общежития.")
+            send_message(chat_id, bot_locales.t(chat_type, user_id, "no_admin_perm"))
             return
 
         floors_data = db.get_floors_data()
-        msg = "👥 <b>СПИСОК ПРОЖИВАЮЩИХ ПО КОМНАТАМ:</b>\n\n"
+        msg = bot_locales.t(chat_type, user_id, 'residents_title')
         
         for fl_num in [2, 7]:
             rooms = floors_data["floors"].get(fl_num, [])
-            msg += f"<b>{fl_num} ЭТАЖ:</b>\n"
+            msg += bot_locales.t(chat_type, user_id, 'residents_floor', floor=fl_num)
             for rm in rooms:
                 if rm["residents"]:
                     names = ", ".join([f"{r['full_name']} (ID:#{r['id']})" for r in rm["residents"]])
-                    msg += f"  • <b>Комн. {rm['room_number']}:</b> {names}\n"
+                    msg += bot_locales.t(chat_type, user_id, 'residents_room', room=rm['room_number'], names=names)
             msg += "\n"
 
-        send_message(chat_id, msg, reply_markup=get_back_to_menu_keyboard())
+        send_message(chat_id, msg, reply_markup=get_back_to_menu_keyboard(chat_type, user_id))
 
     elif text.startswith("/addadmin"):
         if not is_admin(user_id):
-            send_message(chat_id, "⛔ У вас нет доступа к административной панели общежития.")
+            send_message(chat_id, bot_locales.t(chat_type, user_id, "no_admin_perm"))
             return
 
         try:
@@ -299,21 +289,21 @@ def handle_command(message):
                 admin_ids.append(new_id)
                 config["admin_ids"] = admin_ids
                 save_config(config)
-                send_message(chat_id, f"✅ <b>Пользователь Telegram ID <code>{new_id}</code> успешно добавлен в список Администраторов бота!</b>")
+                send_message(chat_id, bot_locales.t(chat_type, user_id, 'addadmin_success', uid=new_id))
             else:
-                send_message(chat_id, f"ℹ️ Пользователь ID <code>{new_id}</code> уже является администратором.")
+                send_message(chat_id, bot_locales.t(chat_type, user_id, 'addadmin_already', uid=new_id))
         except Exception:
-            send_message(chat_id, "⚠️ <b>Формат команды:</b>\n<code>/addadmin TelegramID</code>\n\n<i>Пример:</i> <code>/addadmin 123456789</code>")
+            send_message(chat_id, bot_locales.t(chat_type, user_id, 'addadmin_error'))
 
     elif text.startswith("/deladmin"):
         if not is_admin(user_id):
-            send_message(chat_id, "⛔ У вас нет доступа к административной панели общежития.")
+            send_message(chat_id, bot_locales.t(chat_type, user_id, "no_admin_perm"))
             return
 
         try:
             target_id = int(text.split()[1].strip())
             if target_id == MAIN_OWNER_ID:
-                send_message(chat_id, "⚠️ Нельзя удалить главного владельца бота.")
+                send_message(chat_id, bot_locales.t(chat_type, user_id, 'deladmin_owner'))
                 return
 
             admin_ids = config.get("admin_ids", [MAIN_OWNER_ID])
@@ -321,15 +311,15 @@ def handle_command(message):
                 admin_ids.remove(target_id)
                 config["admin_ids"] = admin_ids
                 save_config(config)
-                send_message(chat_id, f"✅ <b>Пользователь Telegram ID <code>{target_id}</code> удален из списка Администраторов.</b>")
+                send_message(chat_id, bot_locales.t(chat_type, user_id, 'deladmin_success', uid=target_id))
             else:
-                send_message(chat_id, f"ℹ️ Пользователь ID <code>{target_id}</code> не найден в списке админов.")
+                send_message(chat_id, bot_locales.t(chat_type, user_id, 'deladmin_not_found', uid=target_id))
         except Exception:
-            send_message(chat_id, "⚠️ <b>Формат команды:</b>\n<code>/deladmin TelegramID</code>\n\n<i>Пример:</i> <code>/deladmin 123456789</code>")
+            send_message(chat_id, bot_locales.t(chat_type, user_id, 'deladmin_error'))
 
     elif text.startswith("/add "):
         if not is_admin(user_id):
-            send_message(chat_id, "⛔ У вас нет доступа к административной панели общежития.")
+            send_message(chat_id, bot_locales.t(chat_type, user_id, "no_admin_perm"))
             return
 
         try:
@@ -341,13 +331,14 @@ def handle_command(message):
 
             res_id = db.add_resident(full_name, nickname, "", gender, room_num, "permanent")
             excel_sync.export_db_to_excel(db.DB_PATH, EXCEL_PATH)
-            send_message(chat_id, f"✅ <b>Жилец успешно заселен!</b>\nID: #{res_id}\nФИО: {full_name}\nКомната: {room_num or 'В очереди'}")
+            room_display = room_num or bot_locales.t(chat_type, user_id, 'add_waiting')
+            send_message(chat_id, bot_locales.t(chat_type, user_id, 'add_success', res_id=res_id, name=full_name, room=room_display))
         except Exception:
-            send_message(chat_id, "⚠️ <b>Формат команды:</b>\n<code>/add ФИО | Ник | M/F | НомерКомнаты</code>\n\n<i>Пример:</i>\n<code>/add Иванов Иван | ivanov_i | M | 705</code>")
+            send_message(chat_id, bot_locales.t(chat_type, user_id, 'add_error'))
 
     elif text.startswith("/evict"):
         if not is_admin(user_id):
-            send_message(chat_id, "⛔ У вас нет доступа к административной панели общежития.")
+            send_message(chat_id, bot_locales.t(chat_type, user_id, "no_admin_perm"))
             return
 
         try:
@@ -355,13 +346,13 @@ def handle_command(message):
             res_id = int(val)
             db.evict_resident(res_id)
             excel_sync.export_db_to_excel(db.DB_PATH, EXCEL_PATH)
-            send_message(chat_id, f"✅ <b>Жилец ID #{res_id} успешно выселен!</b> Данные обновлены на сайте и в Excel.")
+            send_message(chat_id, bot_locales.t(chat_type, user_id, 'evict_success', res_id=res_id))
         except Exception:
-            send_message(chat_id, "⚠️ <b>Формат команды:</b>\n<code>/evict ID_жильца</code>\n\n<i>Пример:</i> <code>/evict 15</code>")
+            send_message(chat_id, bot_locales.t(chat_type, user_id, 'evict_error'))
 
     elif text.startswith("/move"):
         if not is_admin(user_id):
-            send_message(chat_id, "⛔ У вас нет доступа к административной панели общежития.")
+            send_message(chat_id, bot_locales.t(chat_type, user_id, "no_admin_perm"))
             return
 
         try:
@@ -378,15 +369,15 @@ def handle_command(message):
             if res:
                 db.update_resident(res_id, res["full_name"], res["nickname"] or "", res["profile_url"] or "", res["gender"], new_room, res["status"])
                 excel_sync.export_db_to_excel(db.DB_PATH, EXCEL_PATH)
-                send_message(chat_id, f"✅ <b>Жилец {res['full_name']} переселен в комнату {new_room}!</b>")
+                send_message(chat_id, bot_locales.t(chat_type, user_id, 'move_success', name=res['full_name'], room=new_room))
             else:
-                send_message(chat_id, "⚠️ Жилец с таким ID не найден.")
+                send_message(chat_id, bot_locales.t(chat_type, user_id, 'move_not_found'))
         except Exception:
-            send_message(chat_id, "⚠️ <b>Формат команды:</b>\n<code>/move ID_жильца НоваяКомната</code>\n\n<i>Пример:</i> <code>/move 15 706</code>")
+            send_message(chat_id, bot_locales.t(chat_type, user_id, 'move_error'))
 
     elif text.startswith("/setduty"):
         if not is_admin(user_id):
-            send_message(chat_id, "⛔ У вас нет доступа к административной панели общежития.")
+            send_message(chat_id, bot_locales.t(chat_type, user_id, "no_admin_perm"))
             return
 
         try:
@@ -394,11 +385,11 @@ def handle_command(message):
             duty_date = parts[0]
             room_num = parts[1]
 
-            db.set_manual_duty(duty_date, 7, room_num, "pending", "Назначено через Telegram админа")
+            db.set_manual_duty(duty_date, 7, room_num, "pending", "Назначено через Telegram")
             excel_sync.export_db_to_excel(db.DB_PATH, EXCEL_PATH)
-            send_message(chat_id, f"✅ <b>Дежурство на {duty_date} назначено на комнату {room_num}!</b> Данные обновлены на сайте.")
+            send_message(chat_id, bot_locales.t(chat_type, user_id, 'setduty_success', date=duty_date, room=room_num))
         except Exception:
-            send_message(chat_id, "⚠️ <b>Формат команды:</b>\n<code>/setduty ГГГГ-ММ-ДД НомерКомнаты</code>\n\n<i>Пример:</i> <code>/setduty 2026-08-10 706</code>")
+            send_message(chat_id, bot_locales.t(chat_type, user_id, 'setduty_error'))
 
 def handle_callback_query(cb):
     cb_id = cb["id"]
@@ -439,89 +430,88 @@ def handle_callback_query(cb):
         today_duty = db.get_today_duty()
         item = today_duty.get(7)
 
-        updated_text = format_duty_message(item, chat_type=chat_type, user_id=user_id) + f"\n\n🎉 <b>ОТМЕЧЕНО ВЫПОЛНЕННЫМ:</b> {user_name} в Telegram!\n<i>Статус мгновенно синхронизирован с веб-сайтом!</i>"
+        updated_text = format_duty_message(item, chat_type=chat_type, user_id=user_id) + "\n\n" + bot_locales.t(chat_type, user_id, 'duty_done_updated', user_name=user_name)
         edit_message(chat_id, msg_id, updated_text, reply_markup=None)
 
     elif data == "adm:menu":
         if not is_admin(user_id):
-            answer_callback_query(cb_id, "⛔ Нет доступа", show_alert=True)
+            answer_callback_query(cb_id, bot_locales.t(chat_type, user_id, 'no_access'), show_alert=True)
             return
         answer_callback_query(cb_id)
-        edit_message(chat_id, msg_id, render_admin_menu_text(), reply_markup=get_admin_keyboard(chat_type, user_id))
+        edit_message(chat_id, msg_id, render_admin_menu_text(chat_type, user_id), reply_markup=get_admin_keyboard(chat_type, user_id))
 
 
     elif data == "adm:stats_view":
         if not is_admin(user_id):
-            answer_callback_query(cb_id, "⛔ Нет доступа", show_alert=True)
+            answer_callback_query(cb_id, bot_locales.t(chat_type, user_id, 'no_access'), show_alert=True)
             return
         answer_callback_query(cb_id)
 
         stats = db.get_stats()
         text = (
-            "📊 <b>АКТУАЛЬНАЯ СТАТИСТИКА ОБЩЕЖИТИЯ (PROD)</b>\n\n"
-            f"👥 Всего жильцов: <b>{stats['total_residents']}</b> чел.\n"
-            f"🌸 2 Этаж (Женский): <b>{stats['floor2_count']}</b> чел.\n"
-            f"🔷 7 Этаж (Мужской): <b>{stats['floor7_count']}</b> чел.\n"
-            f"⏳ Временные (14 дней): <b>{stats['temp_count']}</b> чел.\n"
-            f"🛑 В очереди / Без комнаты: <b>{stats['waiting_count']}</b> чел.\n"
-            f"🛏️ Свободных койко-мест: <b>{stats['free_beds']}</b> из {stats['total_capacity']}\n\n"
-            "<i>Данные мгновенно синхронизированы с SQLite и сайтом!</i>"
+            bot_locales.t(chat_type, user_id, 'stats_title')
+            + bot_locales.t(chat_type, user_id, 'stats_total', total=stats['total_residents'])
+            + bot_locales.t(chat_type, user_id, 'stats_floor2', count=stats['floor2_count'])
+            + bot_locales.t(chat_type, user_id, 'stats_floor7', count=stats['floor7_count'])
+            + bot_locales.t(chat_type, user_id, 'stats_temp', count=stats['temp_count'])
+            + bot_locales.t(chat_type, user_id, 'stats_waiting', count=stats['waiting_count'])
+            + bot_locales.t(chat_type, user_id, 'stats_free_beds', free=stats['free_beds'], total_cap=stats['total_capacity'])
+            + bot_locales.t(chat_type, user_id, 'stats_footer')
         )
-        edit_message(chat_id, msg_id, text, reply_markup=get_back_to_menu_keyboard())
+        edit_message(chat_id, msg_id, text, reply_markup=get_back_to_menu_keyboard(chat_type, user_id))
 
     elif data == "adm:list_view":
         if not is_admin(user_id):
-            answer_callback_query(cb_id, "⛔ Нет доступа", show_alert=True)
+            answer_callback_query(cb_id, bot_locales.t(chat_type, user_id, 'no_access'), show_alert=True)
             return
         answer_callback_query(cb_id)
 
         floors_data = db.get_floors_data()
-        text = "👥 <b>СПИСОК ПРОЖИВАЮЩИХ ПО КОМНАТАМ:</b>\n\n"
+        text = bot_locales.t(chat_type, user_id, 'residents_title')
         
         for fl_num in [2, 7]:
             rooms = floors_data["floors"].get(fl_num, [])
-            text += f"<b>{fl_num} ЭТАЖ:</b>\n"
+            text += bot_locales.t(chat_type, user_id, 'residents_floor', floor=fl_num)
             for rm in rooms:
                 if rm["residents"]:
                     names = ", ".join([f"{r['full_name']} (ID:#{r['id']})" for r in rm["residents"]])
-                    text += f"  • <b>Комн. {rm['room_number']}:</b> {names}\n"
+                    text += bot_locales.t(chat_type, user_id, 'residents_room', room=rm['room_number'], names=names)
             text += "\n"
 
-        edit_message(chat_id, msg_id, text, reply_markup=get_back_to_menu_keyboard())
+        edit_message(chat_id, msg_id, text, reply_markup=get_back_to_menu_keyboard(chat_type, user_id))
 
     elif data == "adm:logs_view":
         if not is_admin(user_id):
-            answer_callback_query(cb_id, "⛔ Нет доступа", show_alert=True)
+            answer_callback_query(cb_id, bot_locales.t(chat_type, user_id, 'no_access'), show_alert=True)
             return
         answer_callback_query(cb_id)
 
         logs = db.get_activity_logs(10)
         log_lines = "\n".join([f"• <i>{l['timestamp']}</i> — <b>{l['action']}</b>: {l['details']}" for l in logs])
-        text = f"📑 <b>ЖУРНАЛ ПОСЛЕДНИХ ДЕЙСТВИЙ (АУДИТ):</b>\n\n{log_lines}"
-        edit_message(chat_id, msg_id, text, reply_markup=get_back_to_menu_keyboard())
+        text = bot_locales.t(chat_type, user_id, 'logs_title') + log_lines
+        edit_message(chat_id, msg_id, text, reply_markup=get_back_to_menu_keyboard(chat_type, user_id))
 
     elif data == "adm:admins_view":
         if not is_admin(user_id):
-            answer_callback_query(cb_id, "⛔ Нет доступа", show_alert=True)
+            answer_callback_query(cb_id, bot_locales.t(chat_type, user_id, 'no_access'), show_alert=True)
             return
         answer_callback_query(cb_id)
 
         admin_ids = config.get("admin_ids", [MAIN_OWNER_ID])
-        ids_str = "\n".join([f"  • <code>{aid}</code> {'(👑 Главный Владелец)' if aid == MAIN_OWNER_ID else ''}" for aid in admin_ids])
+        owner_label = bot_locales.t(chat_type, user_id, 'admins_owner_label')
+        ids_str = "\n".join([f"  • <code>{aid}</code> {owner_label if aid == MAIN_OWNER_ID else ''}" for aid in admin_ids])
 
         text = (
-            "🔑 <b>СПИСОК АДМИНИСТРАТОРОВ БОТА:</b>\n\n"
-            f"{ids_str}\n\n"
-            "📌 <b>Чтобы добавить нового админа, отправьте:</b>\n"
-            "<code>/addadmin TelegramID</code>\n\n"
-            "📌 <b>Чтобы удалить админа, отправьте:</b>\n"
-            "<code>/deladmin TelegramID</code>"
+            bot_locales.t(chat_type, user_id, 'admins_title')
+            + ids_str + "\n\n"
+            + bot_locales.t(chat_type, user_id, 'admins_add_hint') + "\n\n"
+            + bot_locales.t(chat_type, user_id, 'admins_del_hint')
         )
-        edit_message(chat_id, msg_id, text, reply_markup=get_back_to_menu_keyboard())
+        edit_message(chat_id, msg_id, text, reply_markup=get_back_to_menu_keyboard(chat_type, user_id))
 
     elif data == "adm:duty_rooms":
         if not is_admin(user_id):
-            answer_callback_query(cb_id, "⛔ Нет доступа", show_alert=True)
+            answer_callback_query(cb_id, bot_locales.t(chat_type, user_id, 'no_access'), show_alert=True)
             return
         answer_callback_query(cb_id)
 
@@ -529,20 +519,20 @@ def handle_callback_query(cb):
         buttons = []
         row = []
         for r_num in male_rooms:
-            row.append({"text": f"📍 Комн. {r_num}", "callback_data": f"adm:setduty_today:{r_num}"})
+            row.append({"text": bot_locales.t(chat_type, user_id, 'duty_room_btn', room=r_num), "callback_data": f"adm:setduty_today:{r_num}"})
             if len(row) == 2:
                 buttons.append(row)
                 row = []
         if row:
             buttons.append(row)
-        buttons.append([{"text": "⬅️ Назад в Меню", "callback_data": "adm:menu"}])
+        buttons.append([{"text": bot_locales.t(chat_type, user_id, 'btn_back_to_menu'), "callback_data": "adm:menu"}])
 
-        text = "🧹 <b>ВЫБЕРИТЕ КОМНАТУ ДЛЯ НАЗНАЧЕНИЯ ДЕЖУРНОЙ НА СЕГОДНЯ:</b>"
+        text = bot_locales.t(chat_type, user_id, 'duty_rooms_title')
         edit_message(chat_id, msg_id, text, reply_markup={"inline_keyboard": buttons})
 
     elif data.startswith("adm:setduty_today:"):
         if not is_admin(user_id):
-            answer_callback_query(cb_id, "⛔ Нет доступа", show_alert=True)
+            answer_callback_query(cb_id, bot_locales.t(chat_type, user_id, 'no_access'), show_alert=True)
             return
 
         room_num = data.split(":")[2]
@@ -551,8 +541,8 @@ def handle_callback_query(cb):
         db.set_manual_duty(today_str, 7, room_num, "pending", "Назначено кнопкой в Telegram")
         excel_sync.export_db_to_excel(db.DB_PATH, EXCEL_PATH)
 
-        answer_callback_query(cb_id, f"✅ Комната {room_num} назначена дежурной на сегодня ({today_str})!", show_alert=True)
-        edit_message(chat_id, msg_id, f"✅ <b>Дежурная комната на сегодня ({today_str}) успешно изменена на Комнату {room_num}!</b>\n\nДанные мгновенно обновлены на сайте.", reply_markup=get_back_to_menu_keyboard())
+        answer_callback_query(cb_id, bot_locales.t(chat_type, user_id, 'duty_assigned_alert', room=room_num, date=today_str), show_alert=True)
+        edit_message(chat_id, msg_id, bot_locales.t(chat_type, user_id, 'duty_assigned_msg', room=room_num, date=today_str), reply_markup=get_back_to_menu_keyboard(chat_type, user_id))
 
 def daily_scheduler_loop():
     """Background thread to send automatic morning duty reminders."""
