@@ -6,9 +6,8 @@ import sqlite3
 import datetime
 import db
 
-def generate_excel_workbook(db_path):
-    conn = sqlite3.connect(db_path)
-    conn.row_factory = sqlite3.Row
+def generate_excel_workbook(db_path=None):
+    conn = db.get_db_connection()
     c = conn.cursor()
 
     wb = openpyxl.Workbook()

@@ -3,14 +3,131 @@ import os
 import datetime
 import calendar
 
+DATABASE_URL = os.environ.get("DATABASE_URL")
+if DATABASE_URL and DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+
 DB_DIR = os.path.join(os.path.dirname(__file__), "database")
 DB_PATH = os.path.join(DB_DIR, "dormitory.db")
 
+
+class DictRow(dict):
+    """Dictionary subclass supporting column name and index access."""
+    def __getitem__(self, key):
+        if isinstance(key, int):
+            return list(self.values())[key]
+        return super().__getitem__(key)
+
+
+class UnifiedCursor:
+    def __init__(self, cursor, is_postgres=False):
+        self.cursor = cursor
+        self.is_postgres = is_postgres
+        self.lastrowid = None
+
+    def execute(self, sql, params=None):
+        if self.is_postgres:
+            # Convert SQLite placeholders (?) to PostgreSQL placeholders (%s)
+            sql = sql.replace('?', '%s')
+            # Convert SQLite AUTOINCREMENT to Postgres SERIAL syntax
+            sql = sql.replace('INTEGER PRIMARY KEY AUTOINCREMENT', 'SERIAL PRIMARY KEY')
+            
+            is_insert = sql.strip().upper().startswith('INSERT')
+            if is_insert and 'RETURNING' not in sql.upper() and 'SELECT' not in sql.upper():
+                try:
+                    sql_ret = sql.rstrip('; ') + ' RETURNING id'
+                    if params:
+                        self.cursor.execute(sql_ret, params)
+                    else:
+                        self.cursor.execute(sql_ret)
+                    row = self.cursor.fetchone()
+                    if row:
+                        if isinstance(row, dict):
+                            self.lastrowid = row.get('id', list(row.values())[0])
+                        elif hasattr(row, '__getitem__'):
+                            self.lastrowid = row[0]
+                    return self
+                except Exception:
+                    pass
+
+        if params:
+            self.cursor.execute(sql, params)
+        else:
+            self.cursor.execute(sql)
+
+        if not self.is_postgres:
+            self.lastrowid = self.cursor.lastrowid
+        return self
+
+    def fetchone(self):
+        row = self.cursor.fetchone()
+        if row is None:
+            return None
+        if isinstance(row, dict):
+            return DictRow(row)
+        if hasattr(row, 'keys'):
+            return DictRow({k: row[k] for k in row.keys()})
+        if isinstance(row, tuple):
+            colnames = [desc[0] for desc in self.cursor.description]
+            return DictRow(dict(zip(colnames, row)))
+        return row
+
+    def fetchall(self):
+        rows = self.cursor.fetchall()
+        if not rows:
+            return []
+        res = []
+        for r in rows:
+            if isinstance(r, dict):
+                res.append(DictRow(r))
+            elif hasattr(r, 'keys'):
+                res.append(DictRow({k: r[k] for k in r.keys()}))
+            elif isinstance(r, tuple):
+                colnames = [desc[0] for desc in self.cursor.description]
+                res.append(DictRow(dict(zip(colnames, r))))
+            else:
+                res.append(r)
+        return res
+
+
+class UnifiedConnection:
+    def __init__(self, conn, is_postgres=False):
+        self.conn = conn
+        self.is_postgres = is_postgres
+
+    def cursor(self):
+        if self.is_postgres:
+            import psycopg2.extras
+            cur = self.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        else:
+            cur = self.conn.cursor()
+        return UnifiedCursor(cur, is_postgres=self.is_postgres)
+
+    def execute(self, sql, params=None):
+        cur = self.cursor()
+        cur.execute(sql, params)
+        return cur
+
+    def commit(self):
+        self.conn.commit()
+
+    def close(self):
+        self.conn.close()
+
+
 def get_db_connection():
+    if DATABASE_URL:
+        try:
+            import psycopg2
+            pg_conn = psycopg2.connect(DATABASE_URL)
+            return UnifiedConnection(pg_conn, is_postgres=True)
+        except Exception as e:
+            print(f"[DB Warning] Could not connect to PostgreSQL: {e}. Falling back to SQLite.")
+
     os.makedirs(DB_DIR, exist_ok=True)
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
-    return conn
+    sqlite_conn = sqlite3.connect(DB_PATH)
+    sqlite_conn.row_factory = sqlite3.Row
+    return UnifiedConnection(sqlite_conn, is_postgres=False)
 
 def init_db():
     conn = get_db_connection()
