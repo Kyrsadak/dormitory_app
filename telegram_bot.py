@@ -150,6 +150,9 @@ def get_admin_keyboard(chat_type='private', user_id=None):
                 {"text": bot_locales.t(chat_type, user_id, "btn_language"), "callback_data": "adm:lang_select"}
             ],
             [
+                {"text": bot_locales.t(chat_type, user_id, "btn_applications"), "callback_data": "adm:applications"}
+            ],
+            [
                 {"text": bot_locales.t(chat_type, user_id, "btn_refresh"), "callback_data": "adm:menu"}
             ]
         ]
@@ -192,6 +195,131 @@ def render_admin_menu_text(chat_type='private', user_id=None):
     return bot_locales.t(chat_type, user_id, 'admin_menu')
 
 
+# ─────────────── APPLICATION STATE MACHINE ───────────────
+# {user_id: {'step': 1..4, 'date': str, 'name': str, 'login': str, 'comments': str}}
+_apply_states = {}
+# {admin_id: {'app_id': int, 'action': 'approve'|'reject'}}
+_pending_decision = {}
+
+
+def notify_admins_new_application(app_id, full_name, login, move_in_date, comments, telegram_user):
+    """Send new application notification to all admins."""
+    admin_ids = config.get("admin_ids", [MAIN_OWNER_ID])
+    tg_info = f"@{telegram_user['username']}" if telegram_user.get('username') else f"ID:{telegram_user.get('id', '?')}"
+    created = datetime.datetime.now().strftime("%d.%m.%Y %H:%M")
+    comment_text = comments if comments else "-"
+
+    approve_btn = bot_locales.t('private', None, 'app_approve_btn')
+    reject_btn  = bot_locales.t('private', None, 'app_reject_btn')
+
+    keyboard = {
+        "inline_keyboard": [[
+            {"text": approve_btn, "callback_data": f"app:approve:{app_id}"},
+            {"text": reject_btn,  "callback_data": f"app:reject:{app_id}"}
+        ]]
+    }
+
+    for admin_id in admin_ids:
+        text = bot_locales.t('private', admin_id, 'admin_new_app',
+            app_id=app_id, name=full_name, login=login,
+            date=move_in_date, comment=comment_text, tg=tg_info, created=created)
+        send_message(admin_id, text, reply_markup=keyboard)
+
+
+def handle_apply_text(message):
+    """Handle text messages when user is in the /apply flow."""
+    chat_type = message.get("chat", {}).get("type", "private")
+    chat_id = message["chat"]["id"]
+    user_id = message.get("from", {}).get("id")
+    text = message.get("text", "").strip()
+
+    state = _apply_states.get(user_id)
+    if not state:
+        return False  # not in apply flow
+
+    step = state.get('step', 1)
+
+    if text == bot_locales.t(chat_type, user_id, 'apply_cancel_btn'):
+        _apply_states.pop(user_id, None)
+        send_message(chat_id, bot_locales.t(chat_type, user_id, 'apply_cancelled'),
+                     reply_markup={"remove_keyboard": True})
+        return True
+
+    if step == 1:
+        # Validate date DD.MM.YYYY
+        import re
+        if not re.match(r'^\d{2}\.\d{2}\.\d{4}$', text):
+            send_message(chat_id, bot_locales.t(chat_type, user_id, 'apply_invalid_date'))
+            return True
+        state['date'] = text
+        state['step'] = 2
+        send_message(chat_id, bot_locales.t(chat_type, user_id, 'apply_step2'))
+
+    elif step == 2:
+        state['name'] = text
+        state['step'] = 3
+        send_message(chat_id, bot_locales.t(chat_type, user_id, 'apply_step3'))
+
+    elif step == 3:
+        state['login'] = text
+        state['step'] = 4
+        skip_btn = bot_locales.t(chat_type, user_id, 'apply_skip_btn')
+        cancel_btn = bot_locales.t(chat_type, user_id, 'apply_cancel_btn')
+        send_message(chat_id, bot_locales.t(chat_type, user_id, 'apply_step4'),
+                     reply_markup={"keyboard": [[{"text": skip_btn}], [{"text": cancel_btn}]],
+                                   "resize_keyboard": True, "one_time_keyboard": True})
+
+    elif step == 4:
+        skip_text = bot_locales.t(chat_type, user_id, 'apply_skip_btn')
+        state['comments'] = '' if text == skip_text else text
+        state['step'] = 5
+        # Show confirmation
+        comment_display = state['comments'] if state['comments'] else '-'
+        confirm_text = bot_locales.t(chat_type, user_id, 'apply_confirm',
+            date=state['date'], name=state['name'],
+            login=state['login'], comment=comment_display)
+        confirm_btn = bot_locales.t(chat_type, user_id, 'apply_confirm_btn')
+        edit_btn = bot_locales.t(chat_type, user_id, 'apply_edit_btn')
+        cancel_btn = bot_locales.t(chat_type, user_id, 'apply_cancel_btn')
+        send_message(chat_id, confirm_text,
+                     reply_markup={"keyboard": [[{"text": confirm_btn}],
+                                                [{"text": edit_btn}],
+                                                [{"text": cancel_btn}]],
+                                   "resize_keyboard": True, "one_time_keyboard": True})
+
+    elif step == 5:
+        confirm_btn = bot_locales.t(chat_type, user_id, 'apply_confirm_btn')
+        edit_btn = bot_locales.t(chat_type, user_id, 'apply_edit_btn')
+        if text == edit_btn:
+            # Reset to step 1
+            state['step'] = 1
+            send_message(chat_id, bot_locales.t(chat_type, user_id, 'apply_step1'),
+                         reply_markup={"remove_keyboard": True})
+        elif text == confirm_btn:
+            # Save to DB
+            user_from = message.get('from', {})
+            tg_username = user_from.get('username', '')
+            lang = bot_locales.get_user_lang(chat_type, user_id)
+            app_id = db.add_application(
+                telegram_id=user_id,
+                telegram_username=tg_username,
+                full_name=state['name'],
+                school21_login=state['login'],
+                move_in_date=state['date'],
+                comments=state.get('comments', ''),
+                lang=lang
+            )
+            _apply_states.pop(user_id, None)
+            # Send success
+            send_message(chat_id,
+                bot_locales.t(chat_type, user_id, 'apply_success', app_id=app_id),
+                reply_markup={"remove_keyboard": True})
+            # Notify admins
+            notify_admins_new_application(
+                app_id, state['name'], state['login'],
+                state['date'], state.get('comments', ''), user_from)
+
+    return True
 def handle_command(message):
     chat_type = message.get("chat", {}).get("type", "private")
     chat_id = message["chat"]["id"]
@@ -201,6 +329,8 @@ def handle_command(message):
     if text in ["/start", "/help"]:
         config["chat_id"] = chat_id
         save_config(config)
+        # Cancel any pending apply flow
+        _apply_states.pop(user_id, None)
 
         admin_text = bot_locales.t(chat_type, user_id, "admin_privilege") if is_admin(user_id) else ""
         welcome_msg = bot_locales.t(chat_type, user_id, "welcome", admin_text=admin_text)
@@ -210,7 +340,7 @@ def handle_command(message):
 
     elif text in ["/language", "/lang", "/til"]:
         if chat_type != 'private':
-            send_message(chat_id, "ℹ️ В групповых чатах язык всегда русский.")
+            send_message(chat_id, "\u2139️ В групповых чатах язык всегда русский.")
             return
         send_message(chat_id, bot_locales.t(chat_type, user_id, "select_language"), reply_markup=get_language_keyboard())
 
@@ -221,6 +351,51 @@ def handle_command(message):
         config["chat_id"] = chat_id
         save_config(config)
         send_message(chat_id, bot_locales.t(chat_type, user_id, "group_linked"))
+
+    elif text in ["/apply", "/ariza", "/zayvka"]:
+        if chat_type != 'private':
+            send_message(chat_id, "ℹ️ Подать заявку можно только в личных сообщениях с ботом.")
+            return
+        _apply_states[user_id] = {'step': 1}
+        cancel_btn = bot_locales.t(chat_type, user_id, 'apply_cancel_btn')
+        apply_btn  = bot_locales.t(chat_type, user_id, 'apply_conditions_btn')
+        keyboard = {"inline_keyboard": [[
+            {"text": apply_btn, "callback_data": "apply:start"},
+            {"text": cancel_btn, "callback_data": "apply:cancel"}
+        ]]}
+        send_message(chat_id, bot_locales.t(chat_type, user_id, 'apply_conditions'), reply_markup=keyboard)
+        _apply_states.pop(user_id, None)  # wait for inline btn
+
+    elif text in ["/applications"]:
+        if not is_admin(user_id):
+            send_message(chat_id, bot_locales.t(chat_type, user_id, "no_admin_perm"))
+            return
+        apps = db.get_all_applications(status='pending')
+        if not apps:
+            send_message(chat_id, bot_locales.t(chat_type, user_id, 'app_no_pending'))
+            return
+        text_out = bot_locales.t(chat_type, user_id, 'applications_title')
+        for app in apps:
+            text_out += bot_locales.t(chat_type, user_id, 'app_list_item',
+                id=app['id'], name=app['full_name'],
+                login=app['school21_login'], status=app['status'])
+        send_message(chat_id, text_out)
+
+    # Check if user is in apply text flow (but text doesn't start with / or is inline step)
+    elif not text.startswith('/'):
+        # Check admin decision comment flow
+        if user_id in _pending_decision:
+            pending = _pending_decision.pop(user_id)
+            app_id = pending['app_id']
+            action = pending['action']
+            admin_comment = text if text != '-' else ''
+            _finalize_application_decision(chat_id, msg_id=None, user_id=user_id,
+                                           chat_type=chat_type, app_id=app_id,
+                                           action=action, admin_comment=admin_comment)
+            return
+        # Apply flow text
+        handle_apply_text(message)
+        return
 
     # --- ADMIN COMMANDS ---
     elif text in ["/admin", "/menu"]:
@@ -391,6 +566,54 @@ def handle_command(message):
         except Exception:
             send_message(chat_id, bot_locales.t(chat_type, user_id, 'setduty_error'))
 
+
+def _finalize_application_decision(chat_id, msg_id, user_id, chat_type, app_id, action, admin_comment):
+    """Finalize approve or reject and notify applicant."""
+    app = db.get_application_by_id(app_id)
+    if not app:
+        send_message(chat_id, "⚠️ Заявка не найдена.")
+        return
+
+    if app['status'] != 'pending':
+        send_message(chat_id, bot_locales.t(chat_type, user_id, 'app_already_decided', status=app['status']))
+        return
+
+    comment_display = admin_comment if admin_comment else ('-' if action == 'reject' else 'Одобрено администрацией')
+
+    db.update_application_status(app_id, action, admin_comment)
+
+    # Edit admin message to show result
+    done_label = bot_locales.t(chat_type, user_id,
+        'app_done_label_approve' if action == 'approved' else 'app_done_label_reject')
+    if msg_id:
+        edit_message(chat_id, msg_id,
+            f"✅ <b>Заявка #{app_id} — {done_label}</b>\n💬 Комментарий: <i>{comment_display}</i>",
+            reply_markup=None)
+    else:
+        send_message(chat_id,
+            f"✅ <b>Заявка #{app_id} — {done_label}</b>\n💬 Комментарий: <i>{comment_display}</i>")
+
+    applicant_tg_id = app.get('telegram_id')
+    if applicant_tg_id:
+        if action == 'approved':
+            # Auto-add to waiting list
+            existing_login = app.get('school21_login', '')
+            gender = app.get('gender') or 'M'
+            res_id = db.add_resident(
+                full_name=app['full_name'],
+                nickname=existing_login,
+                profile_url='',
+                gender=gender,
+                room_number=None,
+                status='waiting'
+            )
+            send_message(chat_id, bot_locales.t(chat_type, user_id, 'app_added_to_waiting', name=app['full_name']))
+            # Notify applicant
+            notify_text = bot_locales.t('private', applicant_tg_id, 'app_approved_notify', comment=comment_display)
+        else:
+            notify_text = bot_locales.t('private', applicant_tg_id, 'app_rejected_notify', comment=comment_display)
+        send_message(applicant_tg_id, notify_text)
+
 def handle_callback_query(cb):
     cb_id = cb["id"]
     chat_type = cb.get("message", {}).get("chat", {}).get("type", "private")
@@ -398,6 +621,46 @@ def handle_callback_query(cb):
     msg_id = cb["message"]["message_id"]
     user_id = cb.get("from", {}).get("id")
     data = cb.get("data", "")
+
+    # ─── Apply flow inline buttons ───
+    if data == "apply:start":
+        answer_callback_query(cb_id)
+        _apply_states[user_id] = {'step': 1}
+        cancel_btn = bot_locales.t(chat_type, user_id, 'apply_cancel_btn')
+        send_message(chat_id, bot_locales.t(chat_type, user_id, 'apply_step1'),
+                     reply_markup={"keyboard": [[{"text": cancel_btn}]],
+                                   "resize_keyboard": True, "one_time_keyboard": False})
+        return
+
+    elif data == "apply:cancel":
+        answer_callback_query(cb_id)
+        _apply_states.pop(user_id, None)
+        send_message(chat_id, bot_locales.t(chat_type, user_id, 'apply_cancelled'),
+                     reply_markup={"remove_keyboard": True})
+        return
+
+    # ─── Admin: approve/reject application ───
+    elif data.startswith("app:approve:") or data.startswith("app:reject:"):
+        if not is_admin(user_id):
+            answer_callback_query(cb_id, bot_locales.t(chat_type, user_id, 'no_access'), show_alert=True)
+            return
+        answer_callback_query(cb_id)
+        parts = data.split(":")
+        action_key = parts[1]  # 'approve' or 'reject'
+        app_id = int(parts[2])
+
+        app = db.get_application_by_id(app_id)
+        if not app:
+            send_message(chat_id, "⚠️ Заявка не найдена.")
+            return
+        if app['status'] != 'pending':
+            send_message(chat_id, bot_locales.t(chat_type, user_id, 'app_already_decided', status=app['status']))
+            return
+
+        # Ask for comment then finalize
+        _pending_decision[user_id] = {'app_id': app_id, 'action': 'approved' if action_key == 'approve' else 'rejected', 'msg_id': msg_id}
+        send_message(chat_id, bot_locales.t(chat_type, user_id, 'app_comment_prompt'))
+        return
 
     if data.startswith("lang:"):
         new_lang = data.split(":")[1]
@@ -543,6 +806,26 @@ def handle_callback_query(cb):
 
         answer_callback_query(cb_id, bot_locales.t(chat_type, user_id, 'duty_assigned_alert', room=room_num, date=today_str), show_alert=True)
         edit_message(chat_id, msg_id, bot_locales.t(chat_type, user_id, 'duty_assigned_msg', room=room_num, date=today_str), reply_markup=get_back_to_menu_keyboard(chat_type, user_id))
+
+    elif data == "adm:applications":
+        if not is_admin(user_id):
+            answer_callback_query(cb_id, bot_locales.t(chat_type, user_id, 'no_access'), show_alert=True)
+            return
+        answer_callback_query(cb_id)
+
+        apps = db.get_all_applications(status='pending')
+        if not apps:
+            edit_message(chat_id, msg_id,
+                bot_locales.t(chat_type, user_id, 'app_no_pending'),
+                reply_markup=get_back_to_menu_keyboard(chat_type, user_id))
+            return
+
+        text_out = bot_locales.t(chat_type, user_id, 'applications_title')
+        for app in apps:
+            text_out += bot_locales.t(chat_type, user_id, 'app_list_item',
+                id=app['id'], name=app['full_name'],
+                login=app['school21_login'], status=app['status'])
+        edit_message(chat_id, msg_id, text_out, reply_markup=get_back_to_menu_keyboard(chat_type, user_id))
 
 def daily_scheduler_loop():
     """Background thread to send automatic morning duty reminders."""

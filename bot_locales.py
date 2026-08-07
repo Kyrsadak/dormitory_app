@@ -127,6 +127,80 @@ LOCALES = {
         'deladmin_owner': "⚠️ Нельзя удалить главного владельца бота.",
         'deladmin_not_found': "ℹ️ Пользователь ID <code>{uid}</code> не найден в списке админов.",
         'deladmin_error': "⚠️ <b>Формат команды:</b>\n<code>/deladmin TelegramID</code>\n\n<i>Пример:</i> <code>/deladmin 123456789</code>",
+
+        # ===== APPLICATION / ЗАЯВКА НА ПРОЖИВАНИЕ =====
+        'btn_apply': "📝 Подать заявку на проживание",
+        'btn_applications': "📋 Заявки на заселение",
+        'apply_conditions': (
+            "🏢 <b>ОБЩЕЖИТИЕ SCHOOL 21 — 2026</b>\n\n"
+            "📍 Адрес: ул. Каландар, 24 (всего 10 минут от кампуса)\n\n"
+            "Мы проводим предварительный опрос для желающих проживать в общежитии.\n\n"
+            "❗ Для проживающих дедлайн по проектам сокращается на 20%\n"
+            "❗ Для жителей Кибрая и Урта Чирчик места не предоставляются\n"
+            "❗ Только участники старше 18 лет\n"
+            "❗ Школа не дает временную регистрацию\n"
+            "❗ Количество мест ограничено\n\n"
+            "💸 <b>Цена:</b> 1 050 000 сум/мес. Оплата за 1 месяц вперёд (не возвращается)\n"
+            "🏢 Комнаты на 4 или 6 человек\n"
+            "📌 Только для пиров основного обучения.\n\n"
+            "Чтобы подать заявку, нажмите кнопку ниже:"
+        ),
+        'apply_conditions_btn': "📝 Заполнить заявку",
+        'apply_cancel_btn': "❌ Отмена",
+        'apply_step1': "📅 Шаг 1/4. Укажите <b>желаемую дату заселения</b>:\n<i>Формат: ДД.ММ.ГГГГ (например: 01.09.2026)</i>",
+        'apply_step2': "👤 Шаг 2/4. Введите <b>ФИО по документам</b>:",
+        'apply_step3': "🏫 Шаг 3/4. Введите ваш <b>Login School 21</b>:",
+        'apply_step4': "💬 Шаг 4/4. Дополнительный комментарий (\u043dеобязательно):\n<i>За вас дают согласие на обработку персональных данных.</i>",
+        'apply_skip_btn': "➡️ Пропустить",
+        'apply_confirm': (
+            "✅ <b>Проверьте данные заявки:</b>\n\n"
+            "📅 Дата заселения: <b>{date}</b>\n"
+            "👤 ФИО: <b>{name}</b>\n"
+            "🏫 Login: <b>{login}</b>\n"
+            "💬 Комментарий: <i>{comment}</i>\n\n"
+            "Все данные верны?"
+        ),
+        'apply_confirm_btn': "✅ Отправить заявку",
+        'apply_edit_btn': "✏️ Изменить",
+        'apply_success': (
+            "✅ <b>Ваша заявка успешно отправлена!</b>\n\n"
+            "📊 Номер заявки: <b>#{app_id}</b>\n"
+            "⏳ Статус: <b>На рассмотрении</b>\n\n"
+            "Мы уведомим вас о решении администрации."
+        ),
+        'apply_cancelled': "❌ Подача заявки отменена.",
+        'apply_invalid_date': "⚠️ Неверный формат даты. Пожалуйста, введите в формате ДД.ММ.ГГГГ (01.09.2026):",
+
+        # admin application management
+        'admin_new_app': (
+            "📥 <b>НОВАЯ ЗАЯВКА #{app_id}</b>\n\n"
+            "👤 ФИО: <b>{name}</b>\n"
+            "🏫 Login: <code>{login}</code>\n"
+            "📅 Дата заселения: <b>{date}</b>\n"
+            "💬 Комментарий: <i>{comment}</i>\n"
+            "📱 Telegram: {tg}\n"
+            "🕑 Подано: {created}"
+        ),
+        'app_approve_btn': "✅ Одобрить",
+        'app_reject_btn': "❌ Отклонить",
+        'app_comment_prompt': "✏️ Введите комментарий для заявителя (\u0438ли напишите \u2018-\u2018 чтобы не оставлять):",
+        'app_approved_notify': (
+            "🎉 <b>Ваша заявка на проживание ОДОБРЕНА!</b>\n\n"
+            "🏢 Вы добавлены в список очереди на комнату.\n"
+            "💬 Комментарий админа: <i>{comment}</i>\n\n"
+            "Свяжитесь с АДМ Шахнозой для дальнейших деталей."
+        ),
+        'app_rejected_notify': (
+            "❌ <b>Ваша заявка на проживание была отклонена.</b>\n"
+            "💬 Причина: <i>{comment}</i>"
+        ),
+        'app_already_decided': "ℹ️ Данная заявка уже обработана (статус: {status}).",
+        'app_done_label_approve': "✅ Одобрено",
+        'app_done_label_reject': "❌ Отклонено",
+        'applications_title': "📋 <b>ЗАЯВКИ НА ПРОЖИВАНИЕ:</b>\n\n",
+        'app_list_item': "🔷 #{id} | {name} | {login} | {status}\n",
+        'app_no_pending': "ℹ️ Нет ожидающих заявок.",
+        'app_added_to_waiting': "✅ {name} автоматически добавлен в список очереди на сайте.",
     },
 
     # ─────────────── ENGLISH ───────────────
@@ -237,6 +311,79 @@ LOCALES = {
         'deladmin_owner': "⚠️ Cannot remove the main bot owner.",
         'deladmin_not_found': "ℹ️ User ID <code>{uid}</code> not found in admin list.",
         'deladmin_error': "⚠️ <b>Command format:</b>\n<code>/deladmin TelegramID</code>\n\n<i>Example:</i> <code>/deladmin 123456789</code>",
+
+        # ===== APPLICATION =====
+        'btn_apply': "📝 Apply for Residence",
+        'btn_applications': "📋 Residence Applications",
+        'apply_conditions': (
+            "🏢 <b>SCHOOL 21 DORMITORY — 2026</b>\n\n"
+            "📍 Address: Qalandar St., 24 (10 min from campus)\n\n"
+            "We are conducting a preliminary survey for those wishing to live in the dormitory.\n\n"
+            "❗ Project deadlines are reduced by 20% for residents\n"
+            "❗ No places for residents of Kibray and Urta Chirchiq\n"
+            "❗ Only participants 18+ years old\n"
+            "❗ School does not provide temporary registration\n"
+            "❗ Limited spots available\n\n"
+            "💸 <b>Price:</b> 1,050,000 UZS/month. 1 month advance payment (non-refundable)\n"
+            "🏢 Rooms for 4 or 6 people\n"
+            "📌 Only for main-track peers.\n\n"
+            "To apply, press the button below:"
+        ),
+        'apply_conditions_btn': "📝 Fill in Application",
+        'apply_cancel_btn': "❌ Cancel",
+        'apply_step1': "📅 Step 1/4. Enter your <b>desired move-in date</b>:\n<i>Format: DD.MM.YYYY (e.g. 01.09.2026)</i>",
+        'apply_step2': "👤 Step 2/4. Enter your <b>Full Name (as in documents)</b>:",
+        'apply_step3': "🏫 Step 3/4. Enter your <b>School 21 Login</b>:",
+        'apply_step4': "💬 Step 4/4. Additional comment (optional):\n<i>By submitting you consent to personal data processing.</i>",
+        'apply_skip_btn': "➡️ Skip",
+        'apply_confirm': (
+            "✅ <b>Review your application:</b>\n\n"
+            "📅 Move-in date: <b>{date}</b>\n"
+            "👤 Full name: <b>{name}</b>\n"
+            "🏫 Login: <b>{login}</b>\n"
+            "💬 Comment: <i>{comment}</i>\n\n"
+            "Is all data correct?"
+        ),
+        'apply_confirm_btn': "✅ Submit Application",
+        'apply_edit_btn': "✏️ Edit",
+        'apply_success': (
+            "✅ <b>Your application has been submitted!</b>\n\n"
+            "📊 Application #: <b>#{app_id}</b>\n"
+            "⏳ Status: <b>Under review</b>\n\n"
+            "We will notify you of the administration's decision."
+        ),
+        'apply_cancelled': "❌ Application cancelled.",
+        'apply_invalid_date': "⚠️ Invalid date format. Please enter as DD.MM.YYYY (01.09.2026):",
+
+        'admin_new_app': (
+            "📥 <b>NEW APPLICATION #{app_id}</b>\n\n"
+            "👤 Name: <b>{name}</b>\n"
+            "🏫 Login: <code>{login}</code>\n"
+            "📅 Move-in date: <b>{date}</b>\n"
+            "💬 Comment: <i>{comment}</i>\n"
+            "📱 Telegram: {tg}\n"
+            "🕑 Submitted: {created}"
+        ),
+        'app_approve_btn': "✅ Approve",
+        'app_reject_btn': "❌ Reject",
+        'app_comment_prompt': "✏️ Enter a comment for the applicant (or type '-' to skip):",
+        'app_approved_notify': (
+            "🎉 <b>Your dormitory application has been APPROVED!</b>\n\n"
+            "🏢 You have been added to the room waiting list.\n"
+            "💬 Admin comment: <i>{comment}</i>\n\n"
+            "Contact ADM Shakhnoza for further details."
+        ),
+        'app_rejected_notify': (
+            "❌ <b>Your dormitory application has been rejected.</b>\n"
+            "💬 Reason: <i>{comment}</i>"
+        ),
+        'app_already_decided': "ℹ️ This application has already been processed (status: {status}).",
+        'app_done_label_approve': "✅ Approved",
+        'app_done_label_reject': "❌ Rejected",
+        'applications_title': "📋 <b>RESIDENCE APPLICATIONS:</b>\n\n",
+        'app_list_item': "🔷 #{id} | {name} | {login} | {status}\n",
+        'app_no_pending': "ℹ️ No pending applications.",
+        'app_added_to_waiting': "✅ {name} automatically added to the waiting list on website.",
     },
 
     # ─────────────── UZBEK ───────────────
@@ -347,6 +494,79 @@ LOCALES = {
         'deladmin_owner': "⚠️ Botning bosh egasini o'chirib bo'lmaydi.",
         'deladmin_not_found': "ℹ️ ID <code>{uid}</code> foydalanuvchi adminlar ro'yxatida topilmadi.",
         'deladmin_error': "⚠️ <b>Buyruq formati:</b>\n<code>/deladmin TelegramID</code>\n\n<i>Misol:</i> <code>/deladmin 123456789</code>",
+
+        # ===== ARIZA / APPLICATION =====
+        'btn_apply': "📝 Yashash uchun ariza topshirish",
+        'btn_applications': "📋 Joylashish arizalari",
+        'apply_conditions': (
+            "🏢 <b>SCHOOL 21 YOTOQXONASI — 2026</b>\n\n"
+            "📍 Manzil: Qalandar ko'chasi, 24 (kampusdan 10 daqiqa)\n\n"
+            "Yotoqxonada yashash istagi borlar uchun dastlabki so'rovnoma o'tkazmoqdamiz.\n\n"
+            "❗ Yotoqxona yashovchilari uchun loyiha deadlayn 20% qisqartiriladi\n"
+            "❗ Qibray va O'rta Chirchiq aholisiga joy berilmaydi\n"
+            "❗ Faqat 18 yoshdan katta ishtirokchilar\n"
+            "❗ Maktab ro'yxatdan o'tish yoki propiska bermaydi\n"
+            "❗ Joylar soni cheklangan\n\n"
+            "💸 <b>Narxi:</b> 1 050 000 so'm/oy. 1 oy uchun oldindan to'lov (qaytarib berilmaydi)\n"
+            "🏢 Xonalar 4 yoki 6 kishilik\n"
+            "📌 Faqat asosiy o'qitish piyonlari uchun.\n\n"
+            "Ariza topshirish uchun quyidagi tugmani bosing:"
+        ),
+        'apply_conditions_btn': "📝 Arizani to'ldirish",
+        'apply_cancel_btn': "❌ Bekor qilish",
+        'apply_step1': "📅 1/4-qadam. <b>Ko'chib kirish sanasini</b> kiriting:\n<i>Format: KK.OO.YYYY (masalan: 01.09.2026)</i>",
+        'apply_step2': "👤 2/4-qadam. <b>Hujjatlardagi F.I.Sh.</b>ni kiriting:",
+        'apply_step3': "🏫 3/4-qadam. <b>School 21 loginingizni</b> kiriting:",
+        'apply_step4': "💬 4/4-qadam. Qo'shimcha izoh (ixtiyoriy):\n<i>Yuborish bilan shaxsiy ma'lumotlarni qayta ishlashga rozilik bildirasiz.</i>",
+        'apply_skip_btn': "➡️ O'tkazib yuborish",
+        'apply_confirm': (
+            "✅ <b>Ariza ma'lumotlarini tekshiring:</b>\n\n"
+            "📅 Ko'chib kirish sanasi: <b>{date}</b>\n"
+            "👤 F.I.Sh.: <b>{name}</b>\n"
+            "🏫 Login: <b>{login}</b>\n"
+            "💬 Izoh: <i>{comment}</i>\n\n"
+            "Barcha ma'lumotlar to'g'rimi?"
+        ),
+        'apply_confirm_btn': "✅ Arizani yuborish",
+        'apply_edit_btn': "✏️ O'zgartirish",
+        'apply_success': (
+            "✅ <b>Arizangiz muvaffaqiyatli yuborildi!</b>\n\n"
+            "📊 Ariza raqami: <b>#{app_id}</b>\n"
+            "⏳ Holat: <b>Ko'rib chiqilmoqda</b>\n\n"
+            "Biz sizga ma'muriyat qarori haqida xabar beramiz."
+        ),
+        'apply_cancelled': "❌ Ariza bekor qilindi.",
+        'apply_invalid_date': "⚠️ Noto'g'ri sana formati. Iltimos KK.OO.YYYY formatida kiriting (01.09.2026):",
+
+        'admin_new_app': (
+            "📥 <b>YANGI ARIZA #{app_id}</b>\n\n"
+            "👤 F.I.Sh.: <b>{name}</b>\n"
+            "🏫 Login: <code>{login}</code>\n"
+            "📅 Ko'chib kirish sanasi: <b>{date}</b>\n"
+            "💬 Izoh: <i>{comment}</i>\n"
+            "📱 Telegram: {tg}\n"
+            "🕑 Yuborildi: {created}"
+        ),
+        'app_approve_btn': "✅ Tasdiqlash",
+        'app_reject_btn': "❌ Rad etish",
+        'app_comment_prompt': "✏️ Ariza beruvchi uchun izoh kiriting (yoki '-' yozing o'tkazib yuborish uchun):",
+        'app_approved_notify': (
+            "🎉 <b>Yotoqxonada yashash arizangiz TASDIQLANDI!</b>\n\n"
+            "🏢 Siz xona kutish ro'yxatiga qo'shildingiz.\n"
+            "💬 Admin izohi: <i>{comment}</i>\n\n"
+            "Batafsil ma'lumot uchun ADM Shakhnoza bilan bog'laning."
+        ),
+        'app_rejected_notify': (
+            "❌ <b>Yotoqxonada yashash arizangiz rad etildi.</b>\n"
+            "💬 Sabab: <i>{comment}</i>"
+        ),
+        'app_already_decided': "ℹ️ Bu ariza allaqachon ko'rib chiqilgan (holat: {status}).",
+        'app_done_label_approve': "✅ Tasdiqlandi",
+        'app_done_label_reject': "❌ Rad etildi",
+        'applications_title': "📋 <b>JOYLASHISH ARIZALARI:</b>\n\n",
+        'app_list_item': "🔷 #{id} | {name} | {login} | {status}\n",
+        'app_no_pending': "ℹ️ Kutilayotgan arizalar yo'q.",
+        'app_added_to_waiting': "✅ {name} saytda kutish ro'yxatiga avtomatik qo'shildi.",
     },
 }
 

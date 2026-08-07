@@ -29,7 +29,7 @@
 
             <!-- Today's Duty Banner -->
             <div class="today-duty-banner" id="todayDutyBanner" style="cursor:pointer;" onclick="switchView('calendar')">
-                <div class="banner-title"><i class="fa-solid fa-broom"></i> <span data-i18n="duty_today_card">Сегодня дежурит:</span></div>
+                <div class="banner-title"><i class="fa-solid fa-broom"></i> <span id="dutyBannerTitle">Дежурные на сегодня:</span></div>
                 <div class="banner-items" id="todayDutyItems">
                     <!-- Populated dynamically by app.js -->
                 </div>
@@ -57,6 +57,11 @@
                 
                 <button type="button" class="btn btn-outline" onclick="exportToExcel()" data-i18n="btn_export_excel">
                     <i class="fa-solid fa-file-excel"></i> Excel
+                </button>
+
+                <!-- Apply Button (visible to all) -->
+                <button type="button" class="btn btn-apply" id="applyBtn" onclick="openApplicationModal()">
+                    <i class="fa-solid fa-file-signature"></i> <span data-i18n="btn_apply_form">Подать заявку</span>
                 </button>
 
                 <!-- Admin Auth Button -->
@@ -321,8 +326,66 @@
         </div>
     </div>
 
-    <script src="i18n.js?v=20260807_02"></script>
-    <script src="app.js?v=20260807_06"></script>
+    <!-- Application Form Modal -->
+    <div class="modal-overlay" id="applicationModal">
+        <div class="modal-box" style="max-width:580px;">
+            <div class="modal-header" style="background: linear-gradient(135deg, #1e3a5f 0%, #2563eb 100%);">
+                <h3 style="color:#fff;"><i class="fa-solid fa-file-signature"></i> <span data-i18n="apply_modal_title">Заявка на проживание — School 21 2026</span></h3>
+                <button type="button" class="modal-close" onclick="closeApplicationModal()" style="color:#fff;">&times;</button>
+            </div>
+            <div class="modal-body" style="padding:24px;">
+
+                <!-- Conditions block -->
+                <div class="apply-conditions-box">
+                    <div class="apply-cond-title"><i class="fa-solid fa-circle-info"></i> <span data-i18n="apply_conditions_title">Об общежитии</span></div>
+                    <p id="applyCondText" class="apply-cond-text" data-i18n="apply_cond_text" style="margin:8px 0 0; font-size:0.82rem; opacity:0.9;"></p>
+                </div>
+
+                <form id="applicationForm" style="margin-top:20px;" onsubmit="handleSubmitApplication(event)">
+                    <div class="form-row">
+                        <label class="form-label" data-i18n="apply_label_date">Дата заселения *</label>
+                        <input type="text" id="appMoveInDate" class="form-control"
+                               data-i18n-placeholder="apply_ph_date"
+                               placeholder="Например: 01.09.2026" required>
+                    </div>
+                    <div class="form-row">
+                        <label class="form-label" data-i18n="apply_label_name">ФИО по документам *</label>
+                        <input type="text" id="appFullName" class="form-control"
+                               data-i18n-placeholder="apply_ph_name"
+                               placeholder="Фамилия Имя Отчество" required>
+                    </div>
+                    <div class="form-row">
+                        <label class="form-label" data-i18n="apply_label_login">Login School 21 *</label>
+                        <input type="text" id="appLogin" class="form-control"
+                               data-i18n-placeholder="apply_ph_login"
+                               placeholder="your_login" required>
+                    </div>
+                    <div class="form-row">
+                        <label class="form-label" data-i18n="apply_label_comments">Комментарий (необязательно)</label>
+                        <textarea id="appComments" class="form-control" rows="3"
+                                  data-i18n-placeholder="apply_ph_comments"
+                                  placeholder="Дополнительная информация" style="resize:vertical;"></textarea>
+                    </div>
+                    <div class="form-row" style="flex-direction:row; align-items:center; gap:10px;">
+                        <input type="checkbox" id="appConsent" style="width:18px; height:18px; cursor:pointer;">
+                        <label for="appConsent" style="margin:0; cursor:pointer; font-size:0.85rem;" data-i18n="apply_label_consent">Даю согласие на обработку персональных данных</label>
+                    </div>
+                    <p id="appFormError" style="color:var(--red-accent); display:none; margin-top:8px; font-size:0.85rem;"></p>
+                    <p id="appFormSuccess" style="color:#22c55e; display:none; margin-top:8px; font-size:0.9rem; font-weight:600;"></p>
+                    <p style="font-size:0.75rem; opacity:0.55; margin-top:8px;" data-i18n="apply_required_note">* Обязательные поля</p>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeApplicationModal()" data-i18n="apply_btn_cancel">Отмена</button>
+                <button type="button" class="btn btn-primary" id="appSubmitBtn" onclick="handleSubmitApplication(event)">
+                    <i class="fa-solid fa-paper-plane"></i> <span data-i18n="apply_btn_submit">Отправить заявку</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="i18n.js?v=20260807_03"></script>
+    <script src="app.js?v=20260807_07"></script>
 </body>
 
 </html>

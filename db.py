@@ -71,6 +71,24 @@ def init_db():
     );
     """)
 
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS housing_applications (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        telegram_id INTEGER,
+        telegram_username TEXT,
+        full_name TEXT NOT NULL,
+        school21_login TEXT NOT NULL,
+        move_in_date TEXT NOT NULL,
+        gender TEXT,
+        comments TEXT,
+        consent INTEGER DEFAULT 1,
+        lang TEXT DEFAULT 'ru',
+        status TEXT NOT NULL DEFAULT 'pending',
+        admin_comment TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+    """)
+
 
     # Populate default rooms if empty
     cursor.execute("SELECT COUNT(*) as count FROM rooms")
@@ -433,8 +451,8 @@ def mark_duty_status(duty_date, floor, status, notes=""):
     return True
 
 def get_today_duty():
-    today_str = "2026-08-07"
-    now = datetime.date(2026, 8, 7)
+    now = datetime.date.today()
+    today_str = now.strftime("%Y-%m-%d")
     schedule = get_duty_schedule_for_month(now.year, now.month, floor=7)
     
     day_items = schedule.get(7, [])
@@ -467,8 +485,56 @@ def set_user_language(telegram_id, language):
     conn.close()
     return True
 
+# ─────────────── Housing Applications ───────────────
+
+def add_application(telegram_id, telegram_username, full_name, school21_login,
+                    move_in_date, comments='', consent=1, lang='ru'):
+    conn = get_db_connection()
+    c = conn.cursor()
+    c.execute("""
+    INSERT INTO housing_applications
+        (telegram_id, telegram_username, full_name, school21_login,
+         move_in_date, comments, consent, lang, status)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending')
+    """, (telegram_id, telegram_username, full_name, school21_login,
+           move_in_date, comments, consent, lang))
+    app_id = c.lastrowid
+    conn.commit()
+    conn.close()
+    return app_id
+
+def get_all_applications(status=None):
+    conn = get_db_connection()
+    c = conn.cursor()
+    if status:
+        c.execute("SELECT * FROM housing_applications WHERE status = ? ORDER BY created_at DESC", (status,))
+    else:
+        c.execute("SELECT * FROM housing_applications ORDER BY created_at DESC")
+    rows = [dict(r) for r in c.fetchall()]
+    conn.close()
+    return rows
+
+def get_application_by_id(app_id):
+    conn = get_db_connection()
+    c = conn.cursor()
+    c.execute("SELECT * FROM housing_applications WHERE id = ?", (app_id,))
+    row = c.fetchone()
+    conn.close()
+    return dict(row) if row else None
+
+def update_application_status(app_id, status, admin_comment=''):
+    conn = get_db_connection()
+    c = conn.cursor()
+    c.execute("""
+    UPDATE housing_applications
+    SET status = ?, admin_comment = ?
+    WHERE id = ?
+    """, (status, admin_comment, app_id))
+    conn.commit()
+    conn.close()
+    return True
+
 if __name__ == "__main__":
     init_db()
     clear_old_duty_test_data()
     print("Database initialized & duty schedule cleared!")
-

@@ -98,6 +98,14 @@ class DormitoryHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                 self._send_json(schedule)
                 return
 
+            elif path == "/api/applications":
+                if not self._is_admin():
+                    self._send_json({"error": "Требуется авторизация администратора"}, status=401)
+                    return
+                apps = db.get_all_applications()
+                self._send_json(apps)
+                return
+
             elif path == "/api/download-excel":
                 wb = excel_sync.generate_excel_workbook(db.DB_PATH)
                 output = io.BytesIO()
@@ -190,6 +198,84 @@ class DormitoryHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             elif path == "/api/export-excel":
                 success, msg = excel_sync.export_db_to_excel(db.DB_PATH, EXCEL_PATH)
                 self._send_json({"success": success, "message": msg})
+                return
+
+            elif path == "/api/applications":
+                body = self._read_body_json()
+                full_name = body.get("full_name", "").strip()
+                school21_login = body.get("school21_login", "").strip()
+                move_in_date = body.get("move_in_date", "").strip()
+                comments = body.get("comments", "").strip()
+
+                if not full_name or not school21_login or not move_in_date:
+                    self._send_json({"error": "Заполните все обязательные поля"}, status=400)
+                    return
+
+                app_id = db.add_application(
+                    telegram_id=None, telegram_username=None,
+                    full_name=full_name, school21_login=school21_login,
+                    move_in_date=move_in_date, comments=comments, lang='ru'
+                )
+
+                # Notify bot admins about new web application
+                try:
+                    import telegram_bot
+                    telegram_bot.notify_admins_new_application(
+                        app_id, full_name, school21_login, move_in_date, comments,
+                        {'username': None, 'id': None}
+                    )
+                except Exception as e:
+                    print(f"[Server] Could not notify admins: {e}")
+
+                self._send_json({"success": True, "app_id": app_id,
+                                 "message": "Заявка успешно отправлена"})
+                return
+
+            elif path.startswith("/api/applications/") and path.endswith("/status"):
+                if not self._is_admin():
+                    self._send_json({"error": "Требуются права администратора"}, status=401)
+                    return
+                try:
+                    app_id = int(path.split("/")[-2])
+                except Exception:
+                    self._send_json({"error": "Неверный ID"}, status=400)
+                    return
+                body = self._read_body_json()
+                status = body.get("status", "pending")
+                admin_comment = body.get("admin_comment", "")
+
+                app = db.get_application_by_id(app_id)
+                if not app:
+                    self._send_json({"error": "Заявка не найдена"}, status=404)
+                    return
+
+                db.update_application_status(app_id, status, admin_comment)
+
+                if status == "approved" and app.get('telegram_id'):
+                    try:
+                        import telegram_bot
+                        db.add_resident(
+                            full_name=app['full_name'],
+                            nickname=app.get('school21_login', ''),
+                            profile_url='', gender=app.get('gender') or 'M',
+                            room_number=None, status='waiting'
+                        )
+                        comment_disp = admin_comment if admin_comment else 'Одобрено'
+                        import bot_locales as bl
+                        notify_text = bl.t('private', app['telegram_id'], 'app_approved_notify', comment=comment_disp)
+                        telegram_bot.send_message(app['telegram_id'], notify_text)
+                    except Exception as e:
+                        print(f"[Server] Approval notify error: {e}")
+                elif status == "rejected" and app.get('telegram_id'):
+                    try:
+                        import telegram_bot, bot_locales as bl
+                        comment_disp = admin_comment if admin_comment else '-'
+                        notify_text = bl.t('private', app['telegram_id'], 'app_rejected_notify', comment=comment_disp)
+                        telegram_bot.send_message(app['telegram_id'], notify_text)
+                    except Exception as e:
+                        print(f"[Server] Rejection notify error: {e}")
+
+                self._send_json({"success": True, "message": "Статус заявки обновлен"})
                 return
 
             self._send_json({"error": "Not Found"}, status=404)

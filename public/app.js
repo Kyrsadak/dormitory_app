@@ -52,6 +52,7 @@ document.addEventListener('DOMContentLoaded', () => {
             closeDutyModal();
             closeLogsModal();
             closeAdminLoginModal();
+            closeApplicationModal();
         }
     });
 
@@ -62,6 +63,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 closeDutyModal();
                 closeLogsModal();
                 closeAdminLoginModal();
+                closeApplicationModal();
             }
         });
     });
@@ -268,6 +270,19 @@ function renderTodayDutyBanner(todayData) {
     const container = document.getElementById('todayDutyItems');
     if (!container) return;
     container.innerHTML = '';
+
+    // Update banner title with today's date
+    const titleEl = document.getElementById('dutyBannerTitle');
+    if (titleEl) {
+        const today = new Date();
+        const dateStr = today.toLocaleDateString(
+            window.i18n ? (window.i18n.getLanguage() === 'en' ? 'en-GB' : 'ru-RU') : 'ru-RU',
+            { day: 'numeric', month: 'long' }
+        );
+        titleEl.textContent = window.i18n
+            ? `${window.i18n.t('duty_today_card')} ${dateStr}`
+            : `Дежурные на сегодня: ${dateStr}`;
+    }
 
     const item = todayData[7];
     if (item) {
@@ -836,5 +851,93 @@ async function exportToExcel() {
         window.location.href = '/api/download-excel';
     } catch (err) {
         console.error("Error exporting to Excel:", err);
+    }
+}
+
+// ─────────────── APPLICATION MODAL ───────────────
+
+function openApplicationModal() {
+    // Reset form
+    const form = document.getElementById('applicationForm');
+    if (form) form.reset();
+    const errEl = document.getElementById('appFormError');
+    const sucEl = document.getElementById('appFormSuccess');
+    const submitBtn = document.getElementById('appSubmitBtn');
+    if (errEl) errEl.style.display = 'none';
+    if (sucEl) sucEl.style.display = 'none';
+    if (submitBtn) submitBtn.disabled = false;
+
+    // Apply translations to modal dynamically
+    if (window.i18n) window.i18n.applyTranslations();
+
+    document.getElementById('applicationModal').classList.add('active');
+}
+
+function closeApplicationModal() {
+    document.getElementById('applicationModal').classList.remove('active');
+}
+
+async function handleSubmitApplication(e) {
+    if (e) e.preventDefault();
+
+    const errEl = document.getElementById('appFormError');
+    const sucEl = document.getElementById('appFormSuccess');
+    const submitBtn = document.getElementById('appSubmitBtn');
+
+    errEl.style.display = 'none';
+    sucEl.style.display = 'none';
+
+    const moveInDate = document.getElementById('appMoveInDate').value.trim();
+    const fullName  = document.getElementById('appFullName').value.trim();
+    const login     = document.getElementById('appLogin').value.trim();
+    const comments  = document.getElementById('appComments').value.trim();
+    const consent   = document.getElementById('appConsent').checked;
+
+    if (!moveInDate || !fullName || !login) {
+        errEl.textContent = window.i18n.t('apply_err_required');
+        errEl.style.display = 'block';
+        return;
+    }
+    if (!consent) {
+        errEl.textContent = window.i18n.t('apply_err_consent');
+        errEl.style.display = 'block';
+        return;
+    }
+
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+
+    try {
+        const res = await fetch('/api/applications', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                full_name: fullName,
+                school21_login: login,
+                move_in_date: moveInDate,
+                comments: comments
+            })
+        });
+        const data = await res.json();
+
+        if (res.ok && data.success) {
+            sucEl.textContent = window.i18n.t('apply_success_msg');
+            sucEl.style.display = 'block';
+            document.getElementById('applicationForm').reset();
+            // Auto-close after 3 seconds
+            setTimeout(() => closeApplicationModal(), 3500);
+        } else {
+            errEl.textContent = data.error || window.i18n.t('apply_err_required');
+            errEl.style.display = 'block';
+            submitBtn.disabled = false;
+        }
+    } catch (err) {
+        errEl.textContent = window.i18n.t('err_connection');
+        errEl.style.display = 'block';
+        submitBtn.disabled = false;
+    } finally {
+        if (!submitBtn.disabled) {
+            submitBtn.innerHTML = `<i class="fa-solid fa-paper-plane"></i> <span>${window.i18n.t('apply_btn_submit')}</span>`;
+        }
     }
 }

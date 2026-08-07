@@ -789,3 +789,43 @@ h1 {
     color: var(--text-muted);
     font-weight: 700;
 }
+
+/* ─── Apply Button ─── */
+.btn-apply {
+    background: linear-gradient(135deg, #059669, #10b981);
+    color: #fff;
+    border: none;
+    padding: 8px 16px;
+    border-radius: var(--radius-sm);
+    font-weight: 600;
+    font-size: 0.85rem;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: opacity 0.2s, transform 0.15s;
+    box-shadow: 0 2px 10px rgba(16,185,129,0.35);
+}
+.btn-apply:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+}
+
+/* ─── Application Modal ─── */
+.apply-conditions-box {
+    background: linear-gradient(135deg, rgba(30,58,95,0.6), rgba(37,99,235,0.2));
+    border: 1px solid rgba(59,130,246,0.3);
+    border-radius: var(--radius-md);
+    padding: 14px 18px;
+}
+.apply-cond-title {
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: #93c5fd;
+    margin-bottom: 4px;
+}
+.apply-cond-text {
+    color: var(--text-muted);
+    line-height: 1.55;
+}
+

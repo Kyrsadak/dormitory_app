@@ -61,7 +61,7 @@ const I18N_TRANSLATIONS = {
 
         // Duty Schedule Tab
         duty_sec_title: "График дежурства по кухне (7 Этаж)",
-        duty_today_card: "Дежурные на сегодня ({date})",
+        duty_today_card: "Дежурные на сегодня:",
         duty_room_num: "Комната {room}",
         duty_status_completed: "✅ ВЫПОЛНЕНО",
         duty_status_pending: "⏳ ОЖИДАЕТ ВЫПОЛНЕНИЯ",
@@ -199,7 +199,32 @@ const I18N_TRANSLATIONS = {
         cal_dow_thu: "Чт",
         cal_dow_fri: "Пт",
         cal_dow_sat: "Сб",
-        cal_dow_sun: "Вс"
+        cal_dow_sun: "Вс",
+
+        // Application form
+        btn_apply_form: "📝 Подать заявку",
+        apply_modal_title: "Заявка на проживание — School 21 2026",
+        apply_conditions_title: "Об общежитии",
+        apply_cond_text: (
+            "📍 Манзес: ул. Каландар, 24 (10 мин. от кампуса). " +
+            "❗ Для жителей Кибрая и Урта Чирчик места не предоставляются. " +
+            "❗ Только 18+. ❗ Оплата 1 050 000 сум/мес за рансо. ❗ Для пиров основного обучения."
+        ),
+        apply_label_date: "Дата заселения *",
+        apply_label_name: "ФИО по документам *",
+        apply_label_login: "Login School 21 *",
+        apply_label_comments: "Комментарий (необязательно)",
+        apply_label_consent: "Даю согласие на обработку персональных данных",
+        apply_ph_date: "Например: 01.09.2026",
+        apply_ph_name: "Фамилия Имя Отчество",
+        apply_ph_login: "your_login",
+        apply_ph_comments: "Дополнительная информация",
+        apply_btn_submit: "✅ Отправить заявку",
+        apply_btn_cancel: "Отмена",
+        apply_success_msg: "✅ Заявка отправлена! Мы уведомим вас о решении.",
+        apply_err_required: "Пожалуйста, заполните все обязательные поля",
+        apply_err_consent: "Необходимо ваше согласие на обработку данных",
+        apply_required_note: "* Обязательные поля",
     },
     en: {
         app_title: "Dormitory Management System",
@@ -255,8 +280,9 @@ const I18N_TRANSLATIONS = {
         btn_move: "Relocate",
         btn_evict: "Evict",
 
+        // Duty Schedule Tab
         duty_sec_title: "Kitchen Duty Schedule (7th Floor)",
-        duty_today_card: "Today's Duty ({date})",
+        duty_today_card: "On duty today:",
         duty_room_num: "Room {room}",
         duty_status_completed: "✅ COMPLETED",
         duty_status_pending: "⏳ PENDING",
@@ -379,7 +405,34 @@ const I18N_TRANSLATIONS = {
         cal_dow_thu: "Thu",
         cal_dow_fri: "Fri",
         cal_dow_sat: "Sat",
-        cal_dow_sun: "Sun"
+        cal_dow_sun: "Sun",
+
+        // Application form
+        btn_apply_form: "📝 Apply for Residence",
+        apply_modal_title: "Residence Application — School 21 2026",
+        apply_conditions_title: "About the Dormitory",
+        apply_cond_text: (
+            "📍 Address: Qalandar St., 24 (10 min from campus). " +
+            "❗ No places for Kibray / Urta Chirchiq residents. " +
+            "❗ 18+ only. " +
+            "❗ 1,050,000 UZS/month prepaid. " +
+            "❗ Main-track peers only."
+        ),
+        apply_label_date: "Move-in date *",
+        apply_label_name: "Full name (as in documents) *",
+        apply_label_login: "School 21 Login *",
+        apply_label_comments: "Comment (optional)",
+        apply_label_consent: "I consent to personal data processing",
+        apply_ph_date: "e.g. 01.09.2026",
+        apply_ph_name: "Last First Middle",
+        apply_ph_login: "your_login",
+        apply_ph_comments: "Additional information",
+        apply_btn_submit: "✅ Submit Application",
+        apply_btn_cancel: "Cancel",
+        apply_success_msg: "✅ Application submitted! We will notify you of the decision.",
+        apply_err_required: "Please fill in all required fields",
+        apply_err_consent: "Your consent to data processing is required",
+        apply_required_note: "* Required fields",
     },
     uz: {
         app_title: "Yotoqxona Boshqaruv Tizimi",
@@ -435,8 +488,9 @@ const I18N_TRANSLATIONS = {
         btn_move: "Ko'chirish",
         btn_evict: "Chiqarish",
 
-        duty_sec_title: "Oshxona navbatchilik jadvali (7-Qavat)",
-        duty_today_card: "Bugungi navbatchilar ({date})",
+        // Duty Schedule Tab
+        duty_sec_title: "Oshxona navbatchilik jadvali (7-qavat)",
+        duty_today_card: "Bugungi navbatchilar:",
         duty_room_num: "{room}-Xona",
         duty_status_completed: "✅ BAJARILDI",
         duty_status_pending: "⏳ BAJARILISHI KUTILMOQDA",
@@ -559,7 +613,32 @@ const I18N_TRANSLATIONS = {
         cal_dow_thu: "Pa",
         cal_dow_fri: "Ju",
         cal_dow_sat: "Sh",
-        cal_dow_sun: "Ya"
+        cal_dow_sun: "Ya",
+
+        // Application form
+        btn_apply_form: "📝 Ariza topshirish",
+        apply_modal_title: "Yashash uchun ariza — School 21 2026",
+        apply_conditions_title: "Yotoqxona haqida",
+        apply_cond_text: (
+            "📍 Manzil: Qalandar ko'chasi, 24 (kampusdan 10 daqiqa). " +
+            "❗ Qibray/O'rta Chirchiq aholisiga joy yo'q. " +
+            "❗ 18+. ❗ 1 050 000 so'm/oy. ❗ Asosiy o'qitish piyonlari uchun."
+        ),
+        apply_label_date: "Ko'chib kirish sanasi *",
+        apply_label_name: "Hujjatlardagi F.I.Sh. *",
+        apply_label_login: "School 21 Login *",
+        apply_label_comments: "Izoh (ixtiyoriy)",
+        apply_label_consent: "Shaxsiy ma'lumotlarni qayta ishlashga roziman",
+        apply_ph_date: "Masalan: 01.09.2026",
+        apply_ph_name: "Familiya Ism Otasining ismi",
+        apply_ph_login: "your_login",
+        apply_ph_comments: "Qo'shimcha ma'lumot",
+        apply_btn_submit: "✅ Arizani yuborish",
+        apply_btn_cancel: "Bekor qilish",
+        apply_success_msg: "✅ Ariza yuborildi! Qaror haqida xabar beramiz.",
+        apply_err_required: "Iltimos barcha majburiy maydonlarni to'ldiring",
+        apply_err_consent: "Shaxsiy ma'lumotlarni qayta ishlashga rozilik kerak",
+        apply_required_note: "* Majburiy maydonlar",
     }
 };
 
