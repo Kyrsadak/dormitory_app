@@ -31,24 +31,27 @@ class UnifiedCursor:
             sql = sql.replace('?', '%s')
             # Convert SQLite AUTOINCREMENT to Postgres SERIAL syntax
             sql = sql.replace('INTEGER PRIMARY KEY AUTOINCREMENT', 'SERIAL PRIMARY KEY')
-            
-            is_insert = sql.strip().upper().startswith('INSERT')
-            if is_insert and 'RETURNING' not in sql.upper() and 'SELECT' not in sql.upper():
-                try:
-                    sql_ret = sql.rstrip('; ') + ' RETURNING id'
-                    if params:
-                        self.cursor.execute(sql_ret, params)
-                    else:
-                        self.cursor.execute(sql_ret)
-                    row = self.cursor.fetchone()
-                    if row:
-                        if isinstance(row, dict):
-                            self.lastrowid = row.get('id', list(row.values())[0])
-                        elif hasattr(row, '__getitem__'):
-                            self.lastrowid = row[0]
-                    return self
-                except Exception:
-                    pass
+
+            # Check if this is an INSERT into a table that has an 'id' column
+            sql_upper = sql.strip().upper()
+            if sql_upper.startswith('INSERT INTO'):
+                parts = sql.strip().split()
+                if len(parts) > 2:
+                    table_name = parts[2].lower().strip('`"\'()')
+                    tables_with_id = ('residents', 'activity_logs', 'duty_schedule', 'housing_applications')
+                    if table_name in tables_with_id and 'RETURNING' not in sql_upper and 'SELECT' not in sql_upper:
+                        sql = sql.rstrip('; ') + ' RETURNING id'
+                        if params:
+                            self.cursor.execute(sql, params)
+                        else:
+                            self.cursor.execute(sql)
+                        row = self.cursor.fetchone()
+                        if row:
+                            if isinstance(row, dict):
+                                self.lastrowid = row.get('id')
+                            elif hasattr(row, '__getitem__'):
+                                self.lastrowid = row[0]
+                        return self
 
         if params:
             self.cursor.execute(sql, params)
@@ -122,7 +125,13 @@ def get_db_connection():
             pg_conn = psycopg2.connect(DATABASE_URL)
             return UnifiedConnection(pg_conn, is_postgres=True)
         except Exception as e:
-            print(f"[DB Warning] Could not connect to PostgreSQL: {e}. Falling back to SQLite.")
+            print(f"[DB Warning] Could not connect to PostgreSQL directly ({e}). Trying sslmode='require'...")
+            try:
+                import psycopg2
+                pg_conn = psycopg2.connect(DATABASE_URL, sslmode='require')
+                return UnifiedConnection(pg_conn, is_postgres=True)
+            except Exception as e2:
+                print(f"[DB Error] Could not connect to PostgreSQL: {e2}. Falling back to SQLite.")
 
     os.makedirs(DB_DIR, exist_ok=True)
     sqlite_conn = sqlite3.connect(DB_PATH)
