@@ -12,7 +12,21 @@ DB_PATH = os.path.join(DB_DIR, "dormitory.db")
 
 
 class DictRow(dict):
-    """Dictionary subclass supporting column name and index access."""
+    """Dictionary subclass supporting column name and index access, converting datetimes to strings."""
+    def __init__(self, d=None):
+        if d:
+            cleaned = {}
+            for k, v in d.items():
+                if isinstance(v, datetime.datetime):
+                    cleaned[k] = v.strftime("%Y-%m-%d %H:%M:%S")
+                elif isinstance(v, datetime.date):
+                    cleaned[k] = v.strftime("%Y-%m-%d")
+                else:
+                    cleaned[k] = v
+            super().__init__(cleaned)
+        else:
+            super().__init__()
+
     def __getitem__(self, key):
         if isinstance(key, int):
             return list(self.values())[key]

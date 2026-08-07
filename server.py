@@ -35,7 +35,7 @@ class DormitoryHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         self.send_header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
         self.send_header("Access-Control-Allow-Headers", "Content-Type, X-Admin-Token")
         self.end_headers()
-        self.wfile.write(json.dumps(data, ensure_ascii=False).encode("utf-8"))
+        self.wfile.write(json.dumps(data, default=str, ensure_ascii=False).encode("utf-8"))
 
     def _read_body_json(self):
         content_length = int(self.headers.get('Content-Length', 0))
