@@ -120,9 +120,33 @@ class UnifiedConnection:
 
 LAST_DB_ERROR = None
 
+def ensure_pg_drivers():
+    if not DATABASE_URL:
+        return
+    try:
+        import psycopg2
+        return
+    except ImportError:
+        pass
+    try:
+        import pg8000
+        return
+    except ImportError:
+        pass
+
+    print("[DB Auto-Installer] PostgreSQL drivers missing. Installing psycopg2-binary and pg8000...")
+    try:
+        import sys, subprocess
+        subprocess.check_call([sys.executable, "-m", "pip", "install", "psycopg2-binary", "pg8000"])
+        print("[DB Auto-Installer] Successfully installed PostgreSQL drivers!")
+    except Exception as e:
+        print(f"[DB Auto-Installer Error] Could not auto-install drivers: {e}")
+
 def get_db_connection():
     global LAST_DB_ERROR
     if DATABASE_URL:
+        ensure_pg_drivers()
+
         # 1. Try psycopg2 standard
         try:
             import psycopg2
