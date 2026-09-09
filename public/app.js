@@ -285,17 +285,19 @@ function renderTodayDutyBanner(todayData) {
     }
 
     const item = todayData[7];
-    if (item) {
+    if (item && item.room_number && item.room_number !== '—') {
         const pillar = document.createElement('div');
         pillar.className = 'duty-pill duty-pill-f7';
         
         const resNames = item.residents.map(r => r.full_name.split(' ')[0]).join(', ') || window.i18n.t('banner_no_residents');
+        const leadStr = item.primary_resident ? ` • ${window.i18n.t('duty_primary_lead')} ${item.primary_resident.full_name.split(' ')[0]}` : '';
+        const completedBadge = item.status === 'completed' ? ' [Выполнено]' : '';
 
         pillar.innerHTML = `
             <span>${window.i18n.t('banner_floor7')}</span>
             <strong>${window.i18n.t('banner_room', {room: item.room_number})}</strong>
-            <span style="opacity:0.8; font-weight:normal;">(${escapeHtml(resNames)})</span>
-            ${item.status === 'completed' ? '✅' : ''}
+            <span style="opacity:0.8; font-weight:normal;">(${escapeHtml(resNames)}${escapeHtml(leadStr)})</span>
+            ${completedBadge}
         `;
         container.appendChild(pillar);
     }
@@ -368,8 +370,11 @@ function renderDutyCalendar() {
         const item = flItems.find(it => it.date === dateStr);
 
         let dutyItemsHtml = '';
-        if (item) {
-        const resListStr = item.residents.map(r => r.full_name.split(' ')[0]).join(', ') || window.i18n.t('cal_no_residents');
+        if (item && item.room_number && item.room_number !== '—') {
+            const resListStr = item.residents.map(r => r.full_name.split(' ')[0]).join(', ') || window.i18n.t('cal_no_residents');
+            const primaryLeadHtml = item.primary_resident 
+                ? `<div class="cal-primary-lead" title="Ответственный дежурный дня"><i class="fa-solid fa-user-check"></i> ${window.i18n.t('duty_primary_lead')} ${escapeHtml(item.primary_resident.full_name.split(' ')[0])}</div>`
+                : '';
             const statusTag = {
                 'completed': `<span class="cal-status-tag status-completed">${window.i18n.t('cal_status_completed')}</span>`,
                 'pending': `<span class="cal-status-tag status-pending">${window.i18n.t('cal_status_pending')}</span>`,
@@ -377,7 +382,7 @@ function renderDutyCalendar() {
                 'replaced': `<span class="cal-status-tag status-skipped">${window.i18n.t('cal_status_replaced')}</span>`
             }[item.status] || '';
 
-            const editBtnHtml = isAdmin ? `<button type="button" class="btn btn-secondary btn-sm" onclick="openEditDutyModal('${dateStr}', 7, '${item.room_number}', '${item.status}')" title="${window.i18n.t('btn_change_duty_room')}">✏️</button>` : '';
+            const editBtnHtml = isAdmin ? `<button type="button" class="btn btn-secondary btn-sm" onclick="openEditDutyModal('${dateStr}', 7, '${item.room_number}', '${item.status}')" title="${window.i18n.t('btn_change_duty_room')}"><i class="fa-solid fa-pen"></i></button>` : '';
 
             dutyItemsHtml = `
                 <div class="cal-duty-badge f7">
@@ -386,8 +391,9 @@ function renderDutyCalendar() {
                         ${statusTag}
                     </div>
                     <div class="cal-duty-res">${escapeHtml(resListStr)}</div>
+                    ${primaryLeadHtml}
                     <div class="cal-card-actions">
-                        ${item.status !== 'completed' ? `<button type="button" class="btn btn-secondary btn-sm" onclick="handleMarkDutyDone('${dateStr}', 7)" title="${window.i18n.t('btn_mark_duty_done')}">✅</button>` : ''}
+                        ${item.status !== 'completed' ? `<button type="button" class="btn btn-secondary btn-sm" onclick="handleMarkDutyDone('${dateStr}', 7)" title="${window.i18n.t('btn_mark_duty_done')}"><i class="fa-solid fa-check"></i></button>` : ''}
                         ${editBtnHtml}
                     </div>
                 </div>
@@ -442,8 +448,13 @@ function openEditDutyModal(dutyDate, floor, currentRoom, currentStatus) {
                 const option = document.createElement('option');
                 option.value = rm.room_number;
                 const resCount = rm.residents.length;
-                const emptyTag = resCount === 0 ? window.i18n.t('duty_room_empty_tag') : '';
-                option.innerText = window.i18n.t('duty_room_option', {room: rm.room_number, count: resCount, empty: emptyTag});
+                let tag = '';
+                if (rm.is_duty_exempt) {
+                    tag = ` [${window.i18n.t('badge_duty_exempt')}]`;
+                } else if (resCount === 0) {
+                    tag = ` ${window.i18n.t('duty_room_empty_tag')}`;
+                }
+                option.innerText = window.i18n.t('duty_room_option', {room: rm.room_number, count: resCount, empty: tag});
                 if (rm.room_number === currentRoom) option.selected = true;
                 select.appendChild(option);
             });
@@ -605,6 +616,26 @@ function renderRoomCard(room) {
     const occClass = isFull ? 'occ-full' : 'occ-space';
     const capLabel = cap === 6 ? window.i18n.t('cap_6') : window.i18n.t('cap_4');
 
+    // Duty exemption badge & admin toggle button for Floor 7 rooms
+    let dutyExemptBadgeHtml = '';
+    let dutyToggleBtnHtml = '';
+    if (room.floor === 7) {
+        if (room.is_duty_exempt) {
+            dutyExemptBadgeHtml = `<span class="badge-duty-exempt" title="${window.i18n.t('badge_duty_exempt')}"><i class="fa-solid fa-ban"></i> <span>${window.i18n.t('badge_duty_exempt')}</span></span>`;
+        }
+        if (isAdmin) {
+            const isEx = !!room.is_duty_exempt;
+            const btnTitle = isEx ? window.i18n.t('btn_include_duty') : window.i18n.t('btn_exempt_duty');
+            const btnIcon = isEx ? 'fa-shield-halved' : 'fa-broom';
+            const exClass = isEx ? 'is-exempt' : '';
+            dutyToggleBtnHtml = `
+                <button type="button" class="btn-duty-toggle ${exClass}" onclick="handleToggleRoomDutyExempt('${room.room_number}', ${!isEx})" title="${btnTitle}">
+                    <i class="fa-solid ${btnIcon}"></i>
+                </button>
+            `;
+        }
+    }
+
     card.innerHTML = `
         <div class="room-card-header">
             <div class="room-num">
@@ -612,7 +643,11 @@ function renderRoomCard(room) {
                 ${room.room_number}
                 <span class="room-capacity-tag">${capLabel}</span>
             </div>
-            <span class="occ-pill ${occClass}">${window.i18n.t('occ_count', {occ, cap})}</span>
+            <div class="room-header-actions">
+                ${dutyExemptBadgeHtml}
+                ${dutyToggleBtnHtml}
+                <span class="occ-pill ${occClass}">${window.i18n.t('occ_count', {occ, cap})}</span>
+            </div>
         </div>
         <div class="resident-list"></div>
     `;
@@ -632,6 +667,36 @@ function renderRoomCard(room) {
     }
 
     return card;
+}
+
+async function handleToggleRoomDutyExempt(roomNumber, willBeExempt) {
+    requireAdminPermission(async () => {
+        const confirmMsg = willBeExempt
+            ? window.i18n.t('confirm_exempt_room', {room: roomNumber})
+            : window.i18n.t('confirm_include_room', {room: roomNumber});
+        if (!confirm(confirmMsg)) return;
+
+        try {
+            const res = await fetch('/api/rooms/duty-exempt', {
+                method: 'POST',
+                headers: getAdminHeaders(),
+                body: JSON.stringify({ room_number: roomNumber, is_duty_exempt: willBeExempt })
+            });
+            const data = await res.json();
+            if (res.ok && data.success) {
+                fetchFloorsData();
+                fetchTodayDuty();
+                if (currentView === 'calendar') {
+                    fetchDutyCalendar();
+                }
+            } else {
+                alert(data.error || "Ошибка обновления статуса дежурства комнаты");
+            }
+        } catch (err) {
+            console.error("Error toggling room duty exempt:", err);
+            alert(window.i18n.t('err_connection'));
+        }
+    });
 }
 
 function renderResidentItem(res) {

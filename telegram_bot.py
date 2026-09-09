@@ -162,6 +162,14 @@ def format_duty_message(duty_item, chat_type='private', user_id=None):
     if not res_names:
         res_names = bot_locales.t(chat_type, user_id, "duty_no_residents")
 
+    primary = duty_item.get("primary_resident")
+    lead_line = ""
+    if primary:
+        p_name = primary['full_name']
+        if primary.get('nickname'):
+            p_name += f" (@{primary['nickname']})"
+        lead_line = bot_locales.t(chat_type, user_id, 'duty_lead_resident', name=p_name) + "\n"
+
     status_icon = bot_locales.t(chat_type, user_id, "duty_status_completed") if status == "completed" else bot_locales.t(chat_type, user_id, "duty_status_pending")
 
     msg = f"{bot_locales.t(chat_type, user_id, 'duty_title')}\n"
@@ -169,6 +177,7 @@ def format_duty_message(duty_item, chat_type='private', user_id=None):
     msg += f"{bot_locales.t(chat_type, user_id, 'duty_status', status_icon=status_icon)}\n\n"
     msg += f"{bot_locales.t(chat_type, user_id, 'duty_today_room', room_num=room_num)}\n"
     msg += f"{res_names}\n\n"
+    msg += f"{lead_line}"
     msg += f"{bot_locales.t(chat_type, user_id, 'duty_task')}"
 
     return msg

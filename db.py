@@ -223,9 +223,15 @@ def init_db():
         room_number TEXT PRIMARY KEY,
         floor INTEGER NOT NULL,
         gender TEXT NOT NULL,
-        capacity INTEGER NOT NULL
+        capacity INTEGER NOT NULL,
+        is_duty_exempt INTEGER NOT NULL DEFAULT 0
     );
     """)
+
+    try:
+        cursor.execute("ALTER TABLE rooms ADD COLUMN is_duty_exempt INTEGER DEFAULT 0")
+    except Exception:
+        pass
 
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS residents (
@@ -502,54 +508,57 @@ def get_activity_logs(limit=50):
     conn.close()
     return logs
 
-# --- DUTY SCHEDULE LOGIC (FLOOR 7 ONLY, ANCHORED TO ROOM 705 ON 2026-08-07) ---
+# --- DUTY SCHEDULE LOGIC (FLOOR 7 ONLY, DYNAMIC RESIDENTS ROTATION) ---
 
 def get_active_male_rooms(conn):
-    """Get sorted list of occupied male rooms on Floor 7: [701, 702, 703, 704, 705, 706, 709, 711, 712, 714]."""
+    """Get sorted list of occupied, non-exempt male rooms on Floor 7."""
     c = conn.cursor()
     c.execute("""
     SELECT rm.room_number, COUNT(r.id) as res_count
     FROM rooms rm
     JOIN residents r ON r.room_number = rm.room_number
-    WHERE rm.floor = 7 AND r.status != 'evicted'
+    WHERE rm.floor = 7 
+      AND (rm.is_duty_exempt IS NULL OR rm.is_duty_exempt = 0)
+      AND r.status != 'evicted' 
+      AND r.status != 'waiting'
     GROUP BY rm.room_number
     HAVING COUNT(r.id) > 0
     ORDER BY rm.room_number ASC
     """)
     rooms = [r["room_number"] for r in c.fetchall()]
-    if not rooms:
-        rooms = ["701", "702", "703", "704", "705", "706", "709", "711", "712", "714"]
     return rooms
+
+def set_room_duty_exempt(room_number, is_duty_exempt):
+    conn = get_db_connection()
+    c = conn.cursor()
+    val = 1 if is_duty_exempt else 0
+    c.execute("UPDATE rooms SET is_duty_exempt = ? WHERE room_number = ?", (val, room_number))
+    action_ru = "освобождена от дежурств" if val else "возвращена в график дежурств"
+    log_activity(conn, "Статус дежурства комнаты", f"Комната {room_number} {action_ru}")
+    conn.commit()
+    conn.close()
+    return True
 
 def get_duty_schedule_for_month(year, month, floor=7):
     """
-    Returns Floor 7 duty schedule.
-    Sequence:
-      2026-08-07 (Today) -> Room 705
-      2026-08-08          -> Room 706
-      2026-08-09          -> Room 709
-      2026-08-10          -> Room 711
-      2026-08-11          -> Room 712
-      2026-08-12          -> Room 714
-      2026-08-13          -> Room 701
-      2026-08-14          -> Room 702
-      2026-08-15          -> Room 703
-      2026-08-16          -> Room 704
-      2026-08-17          -> Room 705 ...
+    Returns Floor 7 dynamic duty schedule based on active residents and duty exemption.
     """
     conn = get_db_connection()
     c = conn.cursor()
 
     active_rooms = get_active_male_rooms(conn)
-    
-    # Anchor: 2026-08-07 -> Room 705
+
+    # Anchor reference: 2026-08-07 -> Room 705 (or first active room if 705 is exempt)
     anchor_date = datetime.date(2026, 8, 7)
     anchor_room = "705"
-    anchor_idx = active_rooms.index(anchor_room) if anchor_room in active_rooms else 0
+    if anchor_room in active_rooms:
+        anchor_idx = active_rooms.index(anchor_room)
+    else:
+        anchor_idx = 0
 
     num_days = calendar.monthrange(year, month)[1]
 
-    # Explicit manual DB entries
+    # Explicit manual / confirmed DB entries
     start_date = f"{year:04d}-{month:02d}-01"
     end_date = f"{year:04d}-{month:02d}-{num_days:02d}"
 
@@ -572,20 +581,32 @@ def get_duty_schedule_for_month(year, month, floor=7):
             assigned_by = entry["assigned_by"]
             notes = entry["notes"] or ""
         else:
-            # Auto rotation relative to 2026-08-07 (705)
-            days_diff = (dt - anchor_date).days
-            room_idx = (anchor_idx + days_diff) % len(active_rooms)
-            room_num = active_rooms[room_idx]
-            status = "pending"
-            assigned_by = "auto"
-            notes = ""
+            if active_rooms:
+                days_diff = (dt - anchor_date).days
+                room_idx = (anchor_idx + days_diff) % len(active_rooms)
+                room_num = active_rooms[room_idx]
+                status = "pending"
+                assigned_by = "auto"
+                notes = ""
+            else:
+                room_num = "—"
+                status = "pending"
+                assigned_by = "auto"
+                notes = "Нет доступных комнат"
 
-        # Fetch current residents of this room
-        c.execute("""
-        SELECT full_name, nickname, status FROM residents
-        WHERE room_number = ? AND status != 'evicted'
-        """, (room_num,))
-        residents = [dict(r) for r in c.fetchall()]
+        # Fetch current active residents of this room
+        residents = []
+        primary_resident = None
+        if room_num and room_num != "—":
+            c.execute("""
+            SELECT id, full_name, nickname, status FROM residents
+            WHERE room_number = ? AND status != 'evicted' AND status != 'waiting'
+            ORDER BY id ASC
+            """, (room_num,))
+            residents = [dict(r) for r in c.fetchall()]
+            if residents:
+                # Dynamically rotate primary responsible resident within the room for that day
+                primary_resident = residents[(day - 1) % len(residents)]
 
         fl_schedule.append({
             "date": date_str,
@@ -596,7 +617,8 @@ def get_duty_schedule_for_month(year, month, floor=7):
             "status": status,
             "assigned_by": assigned_by,
             "notes": notes,
-            "residents": residents
+            "residents": residents,
+            "primary_resident": primary_resident
         })
 
     conn.close()

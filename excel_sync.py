@@ -102,7 +102,7 @@ def generate_excel_workbook(db_path=None):
     now = datetime.date.today()
     duty_data = db.get_duty_schedule_for_month(now.year, now.month, floor=7)
 
-    ws_duty.merge_cells("A1:G1")
+    ws_duty.merge_cells("A1:H1")
     duty_title = ws_duty["A1"]
     duty_title.value = f"   ГРАФИК ДЕЖУРСТВ ПО КУХНЕ (7 ЭТАЖ) — {now.strftime('%B %Y').upper()}"
     duty_title.font = Font(name="Segoe UI", size=14, bold=True, color="FFFFFF")
@@ -110,7 +110,7 @@ def generate_excel_workbook(db_path=None):
     duty_title.alignment = Alignment(vertical="center", horizontal="left")
     ws_duty.row_dimensions[1].height = 36
 
-    duty_headers = ["Дата", "День", "Этаж", "Дежурная Комната", "Жильцы комнаты", "Статус", "Заметки"]
+    duty_headers = ["Дата", "День", "Этаж", "Дежурная Комната", "Жильцы комнаты", "Ответственный (Лидер)", "Статус", "Заметки"]
     ws_duty.append([])
     ws_duty.append(duty_headers)
 
@@ -122,10 +122,11 @@ def generate_excel_workbook(db_path=None):
     items = duty_data.get(7, [])
     for item in items:
         res_names = ", ".join(r["full_name"] for r in item["residents"])
+        primary_name = item["primary_resident"]["full_name"] if item.get("primary_resident") else "—"
         status_text = {
             "pending": "Запланировано",
-            "completed": "Выполнено ✅",
-            "skipped": "Пропущено ⚠️",
+            "completed": "Выполнено",
+            "skipped": "Пропущено",
             "replaced": "Заменено"
         }.get(item["status"], item["status"])
 
@@ -135,6 +136,7 @@ def generate_excel_workbook(db_path=None):
             "7 Этаж",
             f"Комната {item['room_number']}",
             res_names or "—",
+            primary_name,
             status_text,
             item["notes"] or ""
         ])

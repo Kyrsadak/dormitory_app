@@ -171,6 +171,29 @@ class DormitoryHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                 self._send_json({"success": True, "id": res_id, "message": "Жилец успешно добавлен"})
                 return
 
+            elif path == "/api/rooms/duty-exempt":
+                if not self._is_admin():
+                    self._send_json({"error": "Требуются права администратора"}, status=401)
+                    return
+                body = self._read_body_json()
+                room_number = str(body.get("room_number", "")).strip()
+                is_duty_exempt = bool(body.get("is_duty_exempt", False))
+
+                if not room_number:
+                    self._send_json({"error": "Номер комнаты обязателен"}, status=400)
+                    return
+
+                db.set_room_duty_exempt(room_number, is_duty_exempt)
+                excel_sync.export_db_to_excel(db.DB_PATH, EXCEL_PATH)
+                msg = f"Комната {room_number} {'освобождена от дежурств' if is_duty_exempt else 'возвращена в график дежурств'}"
+                self._send_json({
+                    "success": True,
+                    "room_number": room_number,
+                    "is_duty_exempt": is_duty_exempt,
+                    "message": msg
+                })
+                return
+
             elif path == "/api/duty/assign":
                 if not self._is_admin():
                     self._send_json({"error": "Требуются права администратора"}, status=401)
